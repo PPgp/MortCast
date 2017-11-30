@@ -21,7 +21,7 @@ List of two lists, each with coherent Kannisto coefficients \eqn{c} and \eqn{d},
 Estimate the coherent Kannisto parameters as described in Sevcikova et al. (2016).
 }
 \details{
-Given the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{{mlogit(mx) = log(c) + dx}},
+Given the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{mlogit(mx) = log(c) + dx},
     the Coherent Kannisto method estimates the \eqn{d} parameter jointly for male and female 
     data, in order to prevent mortality crossovers in higher ages.
 }

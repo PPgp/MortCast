@@ -18,7 +18,7 @@ List with Kannisto coefficients \eqn{c} and \eqn{d}.
 Estimate the Kannisto parameters (Thatcher et al. 1998).
 }
 \details{
-Given the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{{mlogit(mx) = log(c) + dx}},
+Given the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{mlogit(mx) = log(c) + dx},
     the function estimates the \eqn{c} and \eqn{d} parameters using 
     values of \code{ages} as the covariate \eqn{x}.
 }

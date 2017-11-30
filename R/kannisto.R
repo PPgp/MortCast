@@ -154,7 +154,7 @@ cokannisto <- function(mxM, mxF,
 
 #' @title Kannisto Estimation
 #' @description Estimate the Kannisto parameters (Thatcher et al. 1998).
-#' @details Given the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{{mlogit(mx) = log(c) + dx}},
+#' @details Given the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{mlogit(mx) = log(c) + dx},
 #'     the function estimates the \eqn{c} and \eqn{d} parameters using 
 #'     values of \code{ages} as the covariate \eqn{x}.
 #' @param mx A vector of mortality rates.
@@ -181,7 +181,7 @@ kannisto.estimate <- function(mx, ages){
 
 #' @title Coherent Kannisto Estimation
 #' @description Estimate the coherent Kannisto parameters as described in Sevcikova et al. (2016).
-#' @details Given the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{{mlogit(mx) = log(c) + dx}},
+#' @details Given the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{mlogit(mx) = log(c) + dx},
 #'     the Coherent Kannisto method estimates the \eqn{d} parameter jointly for male and female 
 #'     data, in order to prevent mortality crossovers in higher ages. 
 #' @param mxM A vector of male mortality rates.
@@ -222,7 +222,7 @@ cokannisto.estimate <- function(mxM, mxF, ages){
 #' @description Given estimated Kannisto parameters (coherent or original), 
 #'     it predicts mortality rates for given ages.
 #' @details Given parameters \eqn{c} and \eqn{d} in \code{pars}, 
-#'     the function uses the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{{mlogit(mx) = log(c) + dx}},
+#'     the function uses the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{mlogit(mx) = log(c) + dx},
 #'     to predict mortality rates for age groups \eqn{x} given by \code{ages}.
 #' @param pars A list with Kanisto coefficients \eqn{c} and \eqn{d} 
 #'     (e.g. result of \code{\link{kannisto.estimate}} or \code{\link{cokannisto.estimate}}).

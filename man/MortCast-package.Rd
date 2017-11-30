@@ -7,7 +7,7 @@
 \title{MortCast: Estimation and Projection of Age-Specific Mortality Rates}
 \description{
 Age-specific mortality rates are estimated and projected using
-the Kannisto, Lee-Carter and related methods as described in <doi:10.1007/978-3-319-26603-9_15>.
+the Kannisto, Lee-Carter and related methods as described in Sevcikova et al. (2016) <doi:10.1007/978-3-319-26603-9_15>.
 }
 \details{
 The package implements methodology described in Sevcikova et al. (2016) that is related to 
@@ -49,7 +49,7 @@ mx130 <- cokannisto(mxm, mxf)
 # (here ax is computed from the last observed period 
 # and smoothened over ages)
 lc.est <- lileecarter.estimate(mx130$male, mx130$female, 
-        ax.index = ncol(mx130$male), ax.smooth = TRUE)
+            ax.index = ncol(mx130$male), ax.smooth = TRUE)
         
 # Steps 6-9: project future mortality rates based on future 
 # life expectancies from WPP2017

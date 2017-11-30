@@ -21,7 +21,7 @@ Given estimated Kannisto parameters (coherent or original),
 }
 \details{
 Given parameters \eqn{c} and \eqn{d} in \code{pars}, 
-    the function uses the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{{mlogit(mx) = log(c) + dx}},
+    the function uses the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{mlogit(mx) = log(c) + dx},
     to predict mortality rates for age groups \eqn{x} given by \code{ages}.
 }
 \examples{
