@@ -5,7 +5,7 @@
 \alias{ultimate.bx}
 \title{Rotated Lee-Carter}
 \usage{
-rotate.leecarter(bx, ultimate.bx, e0, e0u = 102, p = 0.5)
+rotate.leecarter(bx, ultimate.bx, e0, e0l = 80, e0u = 102, p = 0.5)
 
 ultimate.bx(bx)
 }
@@ -17,6 +17,8 @@ ultimate.bx(bx)
 (obtained using \code{\link{lileecarter.estimate}} or \code{\link{ultimate.bx}}).}
 
 \item{e0}{A time series of life expectancies.}
+
+\item{e0l}{Level of life expectancy at which the rotation starts.}
 
 \item{e0u}{Level of life expectancy at which the rotation finishes.}
 

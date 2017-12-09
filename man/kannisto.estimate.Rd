@@ -12,7 +12,12 @@ kannisto.estimate(mx, ages)
 \item{ages}{A vector of ages corresponding to \code{mx}.}
 }
 \value{
-List with Kannisto coefficients \eqn{c} and \eqn{d}.
+List with the following components:
+\describe{
+   \item{\code{coefficients}:}{named vector with Kannisto coefficients \eqn{c} and \eqn{d}.}
+   \item{\code{fitted.values}:}{the fitted values}
+   \item{\code{residuals}:}{input rates minus the fitted values}
+}
 }
 \description{
 Estimate the Kannisto parameters (Thatcher et al. 1998).

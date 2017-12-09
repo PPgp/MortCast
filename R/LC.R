@@ -132,8 +132,6 @@ lileecarter.estimate <- function(mxM, mxF, ...) {
 }
 
 
-
-
 #' @title Rotated Lee-Carter
 #' @description Rotate the Lee-Carter parameter \eqn{b_x} over time to reach an ultimate \eqn{b^u_x}, 
 #'     as described in Li et al. (2013).
@@ -143,6 +141,7 @@ lileecarter.estimate <- function(mxM, mxF, ...) {
 #' @param ultimate.bx A vector of the ultimate\eqn{b^u_x} parameter as defined in Li, Lee, Gerland (2013)
 #'    (obtained using \code{\link{lileecarter.estimate}} or \code{\link{ultimate.bx}}).    
 #' @param e0 A time series of life expectancies.
+#' @param e0l Level of life expectancy at which the rotation starts.
 #' @param e0u Level of life expectancy at which the rotation finishes.
 #' @param p Exponent of the smooth function.
 #' @return Function \code{rotate.leecarter} returns a matrix of rotated \eqn{B_x(t)} where rows correspond to age groups and columns 
@@ -167,13 +166,13 @@ lileecarter.estimate <- function(mxM, mxF, ...) {
 #' lines(lc$ultimate.bx, col="red")
 #' for(i in 1:ncol(rotlc)) lines(rotlc[,i], col="grey")
 #'   
-rotate.leecarter <- function(bx, ultimate.bx, e0, e0u=102, p=0.5) {
+rotate.leecarter <- function(bx, ultimate.bx, e0, e0l = 80, e0u = 102, p = 0.5) {
     npred <- length(e0)
-    wt <- (e0 - 80)/(e0u-80)
+    wt <- (e0 - e0l)/(e0u-e0l)
     wst <- (0.5*(1+(sin(pi/2*(2*wt-1)))))^p
     Bxt <- matrix(NA, nrow=length(bx), ncol=npred)
     for(t in 1:npred) {
-        Bxt[,t] <- switch(cut(e0[t], c(0, 80, e0u, 9999), labels=FALSE, right=FALSE),
+        Bxt[,t] <- switch(cut(e0[t], c(0, e0l, e0u, 9999), labels=FALSE, right=FALSE),
                           bx, 
                           (1-wst[t])*bx + wst[t]*ultimate.bx,
                           ultimate.bx)

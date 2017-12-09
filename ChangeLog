@@ -1,0 +1,12 @@
+1.1-0 (12/08/2017)
+-----
+Improvements thanks to suggestions of Marius Pascariu: 
+    Functions kannisto.estimate and cokannisto.estimate now also return fitted values 
+        and residuals.
+    Fixed construction of the resulting matrix in functions kannisto and cokannisto.
+    New argument in rotate.leecarter, called e0l, giving the starting e0 level 
+        of the rotation  
+
+1.0-1 (11/30/2017)
+-----
+Initital version.

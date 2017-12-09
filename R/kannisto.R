@@ -47,13 +47,19 @@ kannisto <- function(mx, est.ages = seq(80, 95, by=5),
         stop("est.ages are not included in mx.")
     est.data <- Mxe[est.ages.char,]
     kann.pars <- apply(est.data, 2, kannisto.estimate, ages = est.ages)
-    res <- lapply(kann.pars, kannisto.predict, ages=proj.ages)
+    kanncoefs <- lapply(kann.pars, function(x) x$coefficients)
+    res <- lapply(kanncoefs, kannisto.predict, ages=proj.ages)
     mres <- sapply(res, cbind)
+    
+    all.ages <- as.character(sort(unique(c(as.integer(ages), proj.ages))))
     proj.ages.char <- as.character(proj.ages)
-    notincl <- which(!proj.ages.char %in% rownames(Mxe))
-    resMx <- rbind(Mxe, matrix(NA, nrow=length(notincl), ncol=ncol(Mxe)))
-    rownames(resMx)[(nrow(Mxe)+1):nrow(resMx)] <- proj.ages[notincl]
+    resMx <- matrix(NA, nrow=length(all.ages), ncol=ncol(Mxe), 
+                    dimnames=list(all.ages, colnames(Mxe)))
+    rownames(resMx) <- all.ages
     resMx[proj.ages.char,] <- mres
+    orig.ages <- rownames(Mxe)[rownames(Mxe) %in% rownames(resMx) & !rownames(Mxe) %in% proj.ages.char]
+    resMx[orig.ages,] <- Mxe[orig.ages,]
+
     if(length(dim(mx)) == 0) { # convert to vector
         resMxv <- resMx[,1]
         names(resMxv) <- rownames(resMx)
@@ -129,19 +135,23 @@ cokannisto <- function(mxM, mxF,
     kann.pars <- apply(est.data, 2, 
                        function(x) cokannisto.estimate(x[1:nest], x[(nest+1):length(x)], 
                                                               ages = est.ages))
-    male.pars <- lapply(kann.pars, function(x) x[["male"]])
+    male.pars <- lapply(kann.pars, function(x) x[["male"]]$coefficients)
     resM <- lapply(male.pars, kannisto.predict, ages=proj.ages)
     matresM <- sapply(resM, cbind)
-    female.pars <- lapply(kann.pars, function(x) x[["female"]])
+    female.pars <- lapply(kann.pars, function(x) x[["female"]]$coefficients)
     resF <- lapply(female.pars, kannisto.predict, ages=proj.ages)
     matresF <- sapply(resF, cbind)
+    all.ages <- as.character(sort(unique(c(as.integer(ages), proj.ages))))
     proj.ages.char <- as.character(proj.ages)
-    notincl <- which(!proj.ages.char %in% rownames(MxeM))
-    resMxM <- rbind(MxeM, matrix(NA, nrow=length(notincl), ncol=ncol(MxeM)))
-    resMxF <- rbind(MxeF, matrix(NA, nrow=length(notincl), ncol=ncol(MxeF)))
-    rownames(resMxM)[(nrow(MxeM)+1):nrow(resMxM)] <- rownames(resMxF)[(nrow(MxeF)+1):nrow(resMxF)] <- proj.ages[notincl]
+    resMxM <- matrix(NA, nrow=length(all.ages), ncol=ncol(MxeM), 
+                     dimnames=list(all.ages, colnames(MxeM)))
+    resMxF <- matrix(NA, nrow=length(all.ages), ncol=ncol(MxeF), 
+                     dimnames=list(all.ages, colnames(MxeF)))
     resMxM[proj.ages.char,] <- matresM
     resMxF[proj.ages.char,] <- matresF
+    orig.ages <- rownames(MxeM)[rownames(MxeM) %in% rownames(resMxM) & !rownames(MxeM) %in% proj.ages.char]
+    resMxM[orig.ages,] <- MxeM[orig.ages,]
+    resMxF[orig.ages,] <- MxeF[orig.ages,]
     if(length(dim(mxM)) == 0) { # convert to vector
         resMxMv <- resMxM[,1]
         resMxFv <- resMxF[,1]
@@ -159,7 +169,12 @@ cokannisto <- function(mxM, mxF,
 #'     values of \code{ages} as the covariate \eqn{x}.
 #' @param mx A vector of mortality rates.
 #' @param ages A vector of ages corresponding to \code{mx}.
-#' @return List with Kannisto coefficients \eqn{c} and \eqn{d}.
+#' @return List with the following components:
+#' \describe{
+#'    \item{\code{coefficients}:}{named vector with Kannisto coefficients \eqn{c} and \eqn{d}.}
+#'    \item{\code{fitted.values}:}{the fitted values}
+#'    \item{\code{residuals}:}{input rates minus the fitted values}
+#'}
 #' @export
 #' @references
 #' Thatcher, A. R., Kannisto, V. and Vaupel, J. W. (1998). The Force of Mortality at Ages 80 to 120, 
@@ -176,7 +191,11 @@ kannisto.estimate <- function(mx, ages){
     y <- log(mx) - log(1-mx)
     x <- ages
     coefs <- coefficients(lm(y ~ x))
-    return(list(c=exp(coefs[[1]]), d=coefs[['x']]))
+    cf <- c(c=exp(coefs[[1]]), d=coefs[['x']])
+    fitted <- kannisto.predict(cf, ages)
+    return(list(coefficients = cf,
+                fitted.values = fitted,
+                residuals = mx - fitted))
 }
 
 #' @title Coherent Kannisto Estimation
@@ -187,8 +206,12 @@ kannisto.estimate <- function(mx, ages){
 #' @param mxM A vector of male mortality rates.
 #' @param mxF A vector of female mortality rates.
 #' @param ages A vector of ages corresponding to \code{mxM} and \code{mxF}.
-#' @return List of two lists, each with coherent Kannisto coefficients \eqn{c} and \eqn{d}, 
-#'   one for male and one for female. The \eqn{d} values are the same in both lists.
+#' @return List of two lists, one for male and one for female. Each of the two lists contains the following components:
+#' \describe{
+#'    \item{\code{coefficients}:}{named vector with the coherent Kannisto coefficients \eqn{c} and \eqn{d}. The \eqn{d} values are the same in both lists.}
+#'    \item{\code{fitted.values}:}{the fitted values}
+#'    \item{\code{residuals}:}{input rates minus the fitted values}
+#'}
 #' @export
 #' 
 #' @seealso \code{\link{cokannisto}}, \code{\link{kannisto.predict}}, \code{\link{kannisto}}
@@ -212,9 +235,17 @@ cokannisto.estimate <- function(mxM, mxF, ages){
     x <- c(ages, ages)
     g <- c(rep(1, length(mxM)), rep(0, length(mxF)))
     coefs <- coefficients(lm(y ~ g + x))
-    return(list(female=list(c=exp(coefs[[1]]), d=coefs[['x']]),
-                male=list(c=exp(coefs[[1]] + coefs[['g']]),
-                            d=coefs[['x']]))
+    female.coefs <- c(c=exp(coefs[[1]]), d=coefs[['x']])
+    fittedF <- kannisto.predict(female.coefs, ages)
+    male.coefs <- c(c=exp(coefs[[1]] + coefs[['g']]), d=coefs[['x']])
+    fittedM <- kannisto.predict(male.coefs, ages)
+    return(list(female = list(coefficients = female.coefs,
+                            fitted.values = fittedF,
+                            residuals = mxF - fittedF),
+                male = list(coefficients = male.coefs,
+                            fitted.values = fittedM,
+                            residuals = mxM - fittedM)
+                    )
                 )
 }
 
@@ -224,7 +255,7 @@ cokannisto.estimate <- function(mxM, mxF, ages){
 #' @details Given parameters \eqn{c} and \eqn{d} in \code{pars}, 
 #'     the function uses the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{mlogit(mx) = log(c) + dx},
 #'     to predict mortality rates for age groups \eqn{x} given by \code{ages}.
-#' @param pars A list with Kanisto coefficients \eqn{c} and \eqn{d} 
+#' @param pars A named vector with Kanisto coefficients \eqn{c} and \eqn{d} 
 #'     (e.g. result of \code{\link{kannisto.estimate}} or \code{\link{cokannisto.estimate}}).
 #' @param ages A vector of ages to make prediction for.
 #' @return Vector of predicted mortality rates.
@@ -241,7 +272,7 @@ cokannisto.estimate <- function(mxM, mxF, ages){
 #' 
 #' # using original Kannisto parameters
 #' pars <- kannisto.estimate(mxm[18:21], ages = ages[18:21])
-#' mxm.pred <- kannisto.predict(pars, ages = ages[22:28])
+#' mxm.pred <- kannisto.predict(pars$coefficients, ages = ages[22:28])
 #' plot(ages, c(mxm[1:21], mxm.pred), type="l", log="y", 
 #'     xlab="age", ylab="mx")
 #'     
@@ -249,14 +280,14 @@ cokannisto.estimate <- function(mxM, mxF, ages){
 #' mxf <- subset(mxF, name == "Germany")[,"2010-2015"]
 #' copars <- cokannisto.estimate(
 #'    mxm[18:21], mxf[18:21], ages = ages[18:21])
-#' cmxm.pred <- kannisto.predict(copars[["male"]], ages = ages[22:28])
-#' cmxf.pred <- kannisto.predict(copars[["female"]], ages = ages[22:28])
+#' cmxm.pred <- kannisto.predict(copars[["male"]]$coefficients, ages = ages[22:28])
+#' cmxf.pred <- kannisto.predict(copars[["female"]]$coefficients, ages = ages[22:28])
 #' plot(ages, c(mxm[1:21], cmxm.pred), type="l", log="y", 
 #'     xlab="age", ylab="mx", col="blue")
 #' lines(ages, c(mxf[1:21], cmxf.pred), col="red")
 #' 
 kannisto.predict <- function(pars, ages){
-    numer <- pars$c * exp(pars$d * ages)
+    numer <- pars["c"] * exp(pars["d"] * ages)
     return(numer/(1 + numer))
 }
 

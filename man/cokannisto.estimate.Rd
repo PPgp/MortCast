@@ -14,8 +14,12 @@ cokannisto.estimate(mxM, mxF, ages)
 \item{ages}{A vector of ages corresponding to \code{mxM} and \code{mxF}.}
 }
 \value{
-List of two lists, each with coherent Kannisto coefficients \eqn{c} and \eqn{d}, 
-  one for male and one for female. The \eqn{d} values are the same in both lists.
+List of two lists, one for male and one for female. Each of the two lists contains the following components:
+\describe{
+   \item{\code{coefficients}:}{named vector with the coherent Kannisto coefficients \eqn{c} and \eqn{d}. The \eqn{d} values are the same in both lists.}
+   \item{\code{fitted.values}:}{the fitted values}
+   \item{\code{residuals}:}{input rates minus the fitted values}
+}
 }
 \description{
 Estimate the coherent Kannisto parameters as described in Sevcikova et al. (2016).
