@@ -82,5 +82,5 @@ of age patterns of mortality decline for long-term projections. Demography, 50, 
 Sevcikova H., Li N., Kantorova V., Gerland P., Raftery A.E. (2016). 
 Age-Specific Mortality and Fertility Rates for Probabilistic Population Projections. 
 In: Schoen R. (eds) Dynamic Demographic Analysis. The Springer Series on Demographic Methods
-and Population Analysis, vol 39. Springer, Cham
+and Population Analysis, vol 39. Springer, Cham. \href{http://arxiv.org/abs/1503.05215}{Earlier version}.
 }
