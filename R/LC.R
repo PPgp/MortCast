@@ -40,15 +40,14 @@ leecarter.estimate <- function(mx, ax.index = NULL, ax.smooth = FALSE,
         lmx <- as.matrix(lmx)
     nest <- ncol(lmx)
     if(is.null(ax.index)) ax.index <- 1:nest
-    ax <- apply(lmx[,ax.index, drop=FALSE], 1, sum, na.rm=TRUE) / (length(ax.index) + 1)
+    ax <- apply(lmx[,ax.index, drop=FALSE], 1, sum, na.rm=TRUE) / length(ax.index)
     if(ax.smooth) {
         ax.sm <- smooth.spline(ax, df=ceiling(length(ax)/2))$y
         ax[-1] <- ax.sm[-1] # keep value of the first age group
     }
-    kt <- rep(NA, nest)
     kt <- apply(lmx, 2, sum) - sum(ax)
-    bx <- bx.estimate(lmx, ax, kt, postprocess=bx.postprocess)
-    return(list(ax=ax, bx=bx, kt=kt))
+    bx <- bx.estimate(lmx, ax, kt, postprocess = bx.postprocess)
+    return(list(ax = ax, bx = bx, kt = kt))
 }
 
 bx.estimate <- function(lmx, ax, kt, postprocess=TRUE) {
@@ -126,8 +125,8 @@ lileecarter.estimate <- function(mxM, mxF, ...) {
     lc.female <- leecarter.estimate(mxF, ...)
     bx <- (lc.male$bx + lc.female$bx)/2
     return(list(bx = bx, ultimate.bx = ultimate.bx(bx),
-                female=list(ax=lc.female$ax, bx=bx, kt=lc.female$kt),
-                male=list(ax=lc.male$ax, bx=bx, kt=lc.male$kt)
+                female=list(ax=lc.female$ax, bx=bx, kt=lc.female$kt, sex.bx = lc.female$bx),
+                male=list(ax=lc.male$ax, bx=bx, kt=lc.male$kt, sex.bx = lc.male$bx)
             ))
 }
 
