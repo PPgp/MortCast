@@ -103,7 +103,7 @@ void doLifeTable(int sex, int nage, double *mx,
 	for(i = 2; i < nage; ++i) {		
 		/*Rprintf("ax%i=%f, mx%i=%f", i, ax[i], i-1, mx[i-1]);*/
 		qx[i] = 5 * mx[i] / (1 + (5 - ax[i]) * mx[i]);
-		lx[i+1] = lx[i] * (1-qx[i]);
+		lx[i+1] = fmax(lx[i] * (1-qx[i]), DBL_MIN);
 		Lx[i] = 5 * lx[i+1] + ax[i] * (lx[i] - lx[i+1]);
 	}
 	

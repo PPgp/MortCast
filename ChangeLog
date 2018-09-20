@@ -1,3 +1,9 @@
+1.2-1 (09/19/2018)
+-----
+Added a constraint to lx in life tables to be positive (thanks to Julia A. Palacios)
+
+Bug fix: Argument keep.lt = TRUE in the mortcast function now works.
+
 1.2-0 (05/25/2018)
 -----
 Bug fix (thanks to Julia A. Palacios and Ivan M. Guevara):

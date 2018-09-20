@@ -289,9 +289,9 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE) {
                                    dimnames=list(names(lc.pars$bx), names(e0m)))
         if(keep.lt) {
             result[[sex]]$sr <- matrix(LCres$Sr, nrow=nage-1,
-                                       list(names(lc.pars$bx)[-2], names(e0m)))
+                                       dimnames=list(names(lc.pars$bx)[-2], names(e0m)))
             result[[sex]]$Lx <- matrix(LCres$LLm, nrow=nage-1,
-                                       list(names(lc.pars$bx)[-2], names(e0m)))
+                                       dimnames=list(names(lc.pars$bx)[-2], names(e0m)))
             result[[sex]]$lx <- matrix(LCres$lx, nrow=nage, 
                                        dimnames=list(names(lc.pars$bx), names(e0m)))
         } else {
