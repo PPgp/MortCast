@@ -11,7 +11,6 @@ export(mortcast)
 export(pmd)
 export(rotate.leecarter)
 export(ultimate.bx)
-
 import(stats)
 import(wpp2017)
 useDynLib(MortCast, .registration = TRUE)
