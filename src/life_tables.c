@@ -271,3 +271,48 @@ void LC(int *Npred, int *Sex, int *Nage, double *ax, double *bx,
 	}
 }
 
+/*****************************************************************************
+ * PMD model
+ * Produces a projection of age-specific mortality rates
+ * 
+ *****************************************************************************/
+void PMD(int *Npred, int *Sex, int *Nage, double *mx0, double *rho, 
+        double *Eop, double *Kl, double *Ku, 
+        double *LLm, double *Sr, double *lx, double *Mx) {
+    double eop, sx[*Nage-1], Lm[*Nage-1], mxm[*Nage], lm[*Nage], locrho[*Nage], locmx[*Nage], constr[*Nage];
+    int i, sex, npred, pred, nage, nagem1;
+    
+    npred = *Npred;
+    sex=*Sex;
+    nage=*Nage;
+    nagem1 = nage-1;
+    
+    for (i=0; i < nage; ++i) {
+        locmx[i] = log(mx0[i]);
+        constr[i] = -1;
+    }
+    for (pred=0; pred < npred; ++pred) {
+        eop = Eop[pred];
+        for (i=0; i < nage; ++i) {
+            locrho[i] = -rho[i + pred*nage];
+        }
+        /*Rprintf("\n%i: eop=%lf", pred, eop);*/
+        LCEoKtC(sex, nage, locmx, locrho, eop, Kl[0], Ku[0], constr, Lm, lm, mxm);		
+        get_sx(Lm, sx, nagem1, nagem1);
+        
+        for (i=0; i < nagem1; ++i) {
+            Sr[i + pred*(nagem1)] = sx[i];
+            /*Rprintf("\nLLm=%lf, Sr=%lf", LLm[i], Sr[i + pred*27]);*/
+            Mx[i + pred*nage] = mxm[i];
+            lx[i + pred*nage] = lm[i];
+            locmx[i] = log(mxm[i]);
+        }
+        Mx[nagem1 + pred*nage] = mxm[nagem1];
+        lx[nagem1 + pred*nage] = lm[nagem1];
+        locmx[nagem1] = log(mxm[nagem1]);
+        for (i=0; i < nage-2; ++i) {
+            LLm[i + pred*(nagem1)] = Lm[i];
+        }
+    }
+}
+

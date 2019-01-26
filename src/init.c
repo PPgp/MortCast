@@ -7,9 +7,11 @@
 
 /* .C calls */
 extern void LC(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
+extern void PMD(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
 
 static const R_CMethodDef CEntries[] = {
     {"LC", (DL_FUNC) &LC, 15},
+    {"PMD", (DL_FUNC) &PMD, 12},
     {NULL, NULL, 0}
 };
 
