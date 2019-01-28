@@ -74,10 +74,12 @@ pmd <- function(mx0, e0, sex = c("male", "female"), interp.rho = FALSE,
                 irho1 <- irho
                 irho2 <- irho+1
             }
-            e0grid <- seq(rho.mids[irho1], rho.mids[irho2], length = 50)
-            iorde0 <- which.min(abs(e0[time]-e0grid))
-            this.rho[,time] <- apply(rho[,rhocols[c(irho1, irho2)]], 1, 
-                  function(x) return(seq(x[1],x[2], length = 50)[iorde0]))
+            if(irho1 > 0 && irho2 <= length(rho.mids)) {
+                e0grid <- seq(rho.mids[irho1], rho.mids[irho2], length = 50)
+                iorde0 <- which.min(abs(e0[time]-e0grid))
+                this.rho[,time] <- apply(rho[,rhocols[c(irho1, irho2)]], 1, 
+                    function(x) return(seq(x[1],x[2], length = 50)[iorde0]))
+            }
         }
     }
     PMDres <- .C("PMD", as.integer(npred), as.integer(c(female=2, male=1)[sex]), as.integer(nage),
