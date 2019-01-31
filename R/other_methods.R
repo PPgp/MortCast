@@ -1,8 +1,16 @@
 #' @title Pattern of Mortality Decline Prediction
 #' @description Predict age-specific mortality rates using the Pattern of mortality decline (PMD) method.
-#' @details These functions implements the PMD method published in Andreev et al. (2013). 
+#' @details These functions implements the PMD method introduced in Andreev et al. (2013). 
 #'     It assumes that the future decline in age-specific mortality will follow a certain pattern 
-#'     with the increase in life expectancy at birth. 
+#'     with the increase in life expectancy at birth (e0): 
+#'     \deqn{\log mx(t) = \log mx(t-1) - k(t) \rho_x(t)}
+#'     
+#'     Here, \eqn{\rho_x(t)} is the age-specific pattern of mortality decline between \eqn{t-1}
+#'     and \eqn{t}. Such patterns for each sex and various levels of e0 
+#'     are stored in the dataset \code{\link{rhoPMD}}. The \code{pmd} function can be instructed 
+#'     to interpolate between neighboring levels of e0 by setting the argument \code{interp.rho} 
+#'     to \code{TRUE}. The \eqn{k} parameter is estimated to match the e0 level using the bisection 
+#'     method.
 #'     
 #'     Function \code{pmd} evaluates the method for a single sex, while  \code{pmdj} does it
 #'     for both sexes.
@@ -10,24 +18,27 @@
 #' @param mx0 A vector with starting age-specific mortality rates.
 #' @param sex Either "male" or "female".
 #' @param interp.rho Logical controlling if the \eqn{\rho} coefficients should be interpolated 
-#'     (\code{TRUE}) or binned (\code{FALSE}).
+#'     (\code{TRUE}) or if the raw (binned) version should be used (\code{FALSE}), as stored in 
+#'     the dataset \code{\link{rhoPMD}}.
 #' @param kranges A vector of size two, giving the min and max of the \eqn{k} parameter which is 
-#'     estimated to match the the target \code{e0}. 
+#'     estimated to match the target \code{e0} using the bisection method.
 #' @param keep.lt Logical. If \code{TRUE} additional life table columns are kept in the 
 #'     resulting object.
 #' @param keep.rho Logical. If \code{TRUE} the \eqn{\rho} coefficients are included in the resulting object.
-#' @return List with elements a matrix \code{mx}
+#' @return Function \code{pmd} returns a list with the following elements: a matrix \code{mx}
 #'     with the predicted mortality rates. If \code{keep.lt} is \code{TRUE}, it also 
 #'     contains matrices \code{sr} (survival rates), and life table quantities \code{Lx} and \code{lx}.
 #'     If \code{keep.rho} is \code{TRUE}, it contains a matrix \code{rho} where columns correpond 
 #'     to the values in the \code{e0} vector and rows correspond to age groups.
 #' @export
 #' 
-#' @seealso \code{\link{mortcast}}
+#' @seealso \code{\link{mortcast}}, \code{\link{mortcast.blend}}, \code{\link{rhoPMD}}
 #' @references
 #' Andreev, K. Gu, D., Gerland, P. (2013). Age Patterns of Mortality Improvement by Level of Life Expectancy at Birth with Applications to Mortality Projections. Paper presented at the Annual Meeting
 #' of the Population Association of America, New Orleans, LA. \url{http://paa2013.princeton.edu/papers/132554}.
 #' 
+#' Gu, D., Pelletier, F. and Sawyer, C. (2017). Projecting Age-sex-specific Mortality: A Comparison of the Modified Lee-Carter and Pattern of Mortality Decline Methods, UN Population Division, 
+#' Technical Paper No. 6. New York: United Nations. \url{https://population.un.org/wpp/Publications/Files/WPP2017_TechnicalPaperNo6.pdf}
 #' 
 #' @examples
 #' data(mxF, e0Fproj, package = "wpp2017")
@@ -38,7 +49,7 @@
 #' # get target e0
 #' e0f <- as.numeric(subset(e0Fproj, name == country)[-(1:2)])
 #' # project into future
-#' pred <- pmd(mxf, e0f, sex = "female")
+#' pred <- pmd(e0f, mxf, sex = "female")
 #' # plot first projection in black and the remaining ones in grey 
 #' plot(pred$mx[,1], type="l", log="y", ylim=range(pred$mx),
 #'     ylab="female mx", xlab="Age", main=country)
@@ -115,6 +126,8 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
 #' @param mxm0 A vector with starting age-specific male mortality rates.
 #' @param mxf0 A vector with starting age-specific female mortality rates.
 #' @param \dots Additional arguments passed to the underlying function. 
+#' @return Function \code{pmdj} returns a list with one element for each sex 
+#'     (\code{male} and \code{female}) where each of them is a list as described above.
 #' 
 pmdj <- function(e0m, e0f, mxm0, mxf0, ...) {
     e0  <- list(female=e0f, male=e0m)
@@ -130,17 +143,25 @@ pmdj <- function(e0m, e0f, mxm0, mxf0, ...) {
 #' @title Model Life Tables Mortality Patterns
 #' @description Predict age-specific mortality rates using Coale-Demeny and UN model life tables.
 #' @details Given a level of life expectancy (e0), sex and a type of model life table, the function 
-#'     extracts the corresponding mortality pattern while interpolating between neighboring e0 groups. 
+#'     extracts the corresponding mortality pattern from \code{\link{MLTlookup}}, 
+#'     while interpolating between neighboring e0 groups.
 #'     Function \code{mlt} is for one sex, while \code{mltj} can be used for both sexes.
 #' @param e0 A time series of target life expectancy.
 #' @param sex Either "male" or "female".
+#' @param type Type of the model life table. Available options are \dQuote{CD East}, \dQuote{CD North}, 
+#' \dQuote{CD South}, \dQuote{CD West}, \dQuote{UN Chilean}, \dQuote{UN Far_East_Asian}, 
+#' \dQuote{UN General}, \dQuote{UN Latin}, \dQuote{UN South_Asian}. 
 #' @return A matrix with the predicted mortality rates. Columns correpond 
 #'     to the values in the \code{e0} vector and rows correspond to age groups.
 #' @export
 #' 
-#' @seealso \code{\link{mortcast}}, \code{\link{pmd}}
+#' @seealso \code{\link{mortcast}}, \code{\link{mortcast.blend}}, \code{\link{pmd}}, \code{\link{MLTlookup}}
 #' 
-#' @references \url{https://population.un.org/wpp/Download/Other/MLT}
+#' @references 
+#' \url{https://population.un.org/wpp/Download/Other/MLT}
+#' 
+#' Coale, A., P. Demeny, and B. Vaughn. 1983. Regional model life tables and stable 
+#' populations. 2nd ed. New York: Academic Press.
 #' 
 #' @examples
 #' data(e0Fproj, package = "wpp2017")
@@ -232,15 +253,15 @@ mltj <- function(e0m, e0f, ...) {
 #' @title Mortality Prediction by Method Blending
 #' @description Predict age-specific mortality rates using a blend of two different methods (Coherent Lee-Carter, 
 #'     Pattern Mortality Decline, or Model Life Tables). Weights can be applied to fine-tune the blending mix.
-#' @details This function allows to combine two different methods using given weights.
-#'     The weights can change over time - by default they are interpolated from a starting weight 
-#'     to the end weight. Projection of mortality for both sexes is supported.
+#' @details The function allows to combine two different methods using given weights.
+#'     The weights can change over time - by default they are interpolated from the starting weight 
+#'     to the end weight. The projection is done for both sexes, so that coherent methods can be applied.
 #' @param e0m A time series of future male life expectancy.
 #' @param e0f A time series of future female life expectancy.
 #' @param meth1 Character string giving the name of the first method to blend. It is one of 
-#'     \dQuote{lc} (Coherent Lee-Carter, function \code{\link{mortcast}}), 
-#'     \dQuote{pmd} (Pattern mortality decline, function \code{\link{pmdj}}) 
-#'     or \dQuote{mltj} (Model Life Tables, function \code{\link{mlt}}).
+#'     \dQuote{lc}, \dQuote{pmd} or \dQuote{mlt}, corresponding to Coherent Lee-Carter (function \code{\link{mortcast}}), 
+#'      Pattern Mortality Decline (function \code{\link{pmdj}}) and 
+#'      Model Life Tables (function \code{\link{mltj}}), respectively.
 #' @param meth2 Character string giving the name of the second method to blend. 
 #'     One of the same choices as \code{meth1}.
 #' @param weights Numeric vector with values between 0 and 1 giving the weight of \code{meth1}.
@@ -258,7 +279,8 @@ mltj <- function(e0m, e0f, ...) {
 #' @return List with elements \code{female} and \code{male}, each of which contains a matrix \code{mx}
 #'     with the predicted mortality rates. In addition, it contains elements \code{meth1res} and \code{meth2res}
 #'     which contain the results of the functions corresponding to the two methods. 
-#'     Elements \code{meth1} and \code{meth2} contain the names of the methods.
+#'     Elements \code{meth1} and \code{meth2} contain the names of the methods. 
+#'     A vector \code{weights} contains the final (possibly interpolated) weights.
 #' @export
 #' 
 #' @seealso \code{\link{mortcast}}, \code{\link{pmdj}}, \code{\link{mltj}}, 

@@ -23,6 +23,13 @@
 #' Functions contained in the package can be used to apply Algorithm 2 in 
 #' Sevcikova et al. (2016) as shown in the Example below.
 #' 
+#' Other methods for forecasting mortality rates are available:
+#' \itemize{
+#'    \item \code{\link{pmd}}: pattern of mortality decline
+#'    \item \code{\link{mlt}}: model life tables
+#'    \item \code{\link{mortcast.blend}}: combining two different methods
+#' }
+#' 
 #' @references
 #' Li, N. and Lee, R. D. (2005). Coherent mortality forecasts for a group of populations: 
 #' An extension of the Lee-Carter method. Demography, 42, 575-594.

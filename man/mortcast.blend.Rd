@@ -14,9 +14,9 @@ mortcast.blend(e0m, e0f, meth1 = "lc", meth2 = "mlt", weights = c(1,
 \item{e0f}{A time series of future female life expectancy.}
 
 \item{meth1}{Character string giving the name of the first method to blend. It is one of 
-\dQuote{lc} (Coherent Lee-Carter, function \code{\link{mortcast}}), 
-\dQuote{pmd} (Pattern mortality decline, function \code{\link{pmdj}}) 
-or \dQuote{mltj} (Model Life Tables, function \code{\link{mlt}}).}
+\dQuote{lc}, \dQuote{pmd} or \dQuote{mlt}, corresponding to Coherent Lee-Carter (function \code{\link{mortcast}}), 
+ Pattern Mortality Decline (function \code{\link{pmdj}}) and 
+ Model Life Tables (function \code{\link{mltj}}), respectively.}
 
 \item{meth2}{Character string giving the name of the second method to blend. 
 One of the same choices as \code{meth1}.}
@@ -43,16 +43,17 @@ is applied to extend the age groups into old ages.}
 List with elements \code{female} and \code{male}, each of which contains a matrix \code{mx}
     with the predicted mortality rates. In addition, it contains elements \code{meth1res} and \code{meth2res}
     which contain the results of the functions corresponding to the two methods. 
-    Elements \code{meth1} and \code{meth2} contain the names of the methods.
+    Elements \code{meth1} and \code{meth2} contain the names of the methods. 
+    A vector \code{weights} contains the final (possibly interpolated) weights.
 }
 \description{
 Predict age-specific mortality rates using a blend of two different methods (Coherent Lee-Carter, 
     Pattern Mortality Decline, or Model Life Tables). Weights can be applied to fine-tune the blending mix.
 }
 \details{
-This function allows to combine two different methods using given weights.
-    The weights can change over time - by default they are interpolated from a starting weight 
-    to the end weight. Projection of mortality for both sexes is supported.
+The function allows to combine two different methods using given weights.
+    The weights can change over time - by default they are interpolated from the starting weight 
+    to the end weight. The projection is done for both sexes, so that coherent methods can be applied.
 }
 \examples{
 data(mxM, mxF, e0Fproj, e0Mproj, package = "wpp2017")

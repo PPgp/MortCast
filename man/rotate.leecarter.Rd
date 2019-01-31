@@ -13,7 +13,7 @@ ultimate.bx(bx)
 \item{bx}{A vector of the Lee-Carter \eqn{b_x} parameter
 (from e.g. \code{\link{lileecarter.estimate}} or \code{\link{leecarter.estimate}}).}
 
-\item{ultimate.bx}{A vector of the ultimate\eqn{b^u_x} parameter as defined in Li, Lee, Gerland (2013)
+\item{ultimate.bx}{A vector of the ultimate \eqn{b^u_x} parameter as defined in Li, Lee, Gerland (2013)
 (obtained using \code{\link{lileecarter.estimate}} or \code{\link{ultimate.bx}}).}
 
 \item{e0}{A time series of life expectancies.}

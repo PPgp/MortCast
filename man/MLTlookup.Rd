@@ -3,12 +3,41 @@
 \docType{data}
 \name{MLTlookup}
 \alias{MLTlookup}
-\title{Model Life Tables Lookup Table}
-\format{An object of class .}
+\title{Model Life Tables Lookup}
+\format{Data frame with the following columns:
+\describe{
+\item{type}{Type of the model life table. Available options are \dQuote{CD East}, \dQuote{CD North}, 
+\dQuote{CD South}, \dQuote{CD West}, \dQuote{UN Chilean}, \dQuote{UN Far_East_Asian}, 
+\dQuote{UN General}, \dQuote{UN Latin}, \dQuote{UN South_Asian}. 
+For the CD types, see Coale et al. (1983). For the UN types, see \url{https://population.un.org/wpp/Download/Other/MLT}.
+}
+\item{sex}{Code for distinguishing sexes. 1 is for male, 2 is for female.}
+\item{age}{Starting age of an age group. These are 0, 1, 5, 10, ... 130.}
+\item{e0}{Level of life expectancy, starting at 20 and going by steps of 2.5 up to 105.}
+\item{mx}{Mortality rates.}
+\item{lx, Lx, sx}{Other life table columns.}
+}}
 \usage{
 data(MLTlookup)
 }
 \description{
-Model Life Tables Lookup Table
+Lookup table containing values for various model life tables, including 
+Coale-Demeny and UN life tables.
+}
+\examples{
+data(MLTlookup)
+str(MLTlookup)
+# CD West life table for male at e0 of 80
+subset(MLTlookup, type == "CD West" & sex == 1 & e0 == 80)
+
+}
+\references{
+Coale, A., P. Demeny, and B. Vaughn. 1983. Regional model life tables and stable 
+populations. 2nd ed. New York: Academic Press.
+
+\url{https://population.un.org/wpp/Download/Other/MLT}
+}
+\seealso{
+\code{\link{mlt}}
 }
 \keyword{datasets}

@@ -137,7 +137,7 @@ lileecarter.estimate <- function(mxM, mxF, ...) {
 #' 
 #' @param bx A vector of the Lee-Carter \eqn{b_x} parameter
 #'    (from e.g. \code{\link{lileecarter.estimate}} or \code{\link{leecarter.estimate}}).
-#' @param ultimate.bx A vector of the ultimate\eqn{b^u_x} parameter as defined in Li, Lee, Gerland (2013)
+#' @param ultimate.bx A vector of the ultimate \eqn{b^u_x} parameter as defined in Li, Lee, Gerland (2013)
 #'    (obtained using \code{\link{lileecarter.estimate}} or \code{\link{ultimate.bx}}).    
 #' @param e0 A time series of life expectancies.
 #' @param e0l Level of life expectancy at which the rotation starts.
@@ -233,7 +233,8 @@ ultimate.bx <- function(bx) {
 #'     contains matrices \code{sr} (survival rates), and life table quantities \code{Lx} and \code{lx}.
 #' @export
 #' 
-#' @seealso \code{\link{rotate.leecarter}}, \code{\link{leecarter.estimate}}, \code{\link{lileecarter.estimate}}
+#' @seealso \code{\link{rotate.leecarter}}, \code{\link{leecarter.estimate}}, \code{\link{lileecarter.estimate}},
+#'     \code{\link{mortcast.blend}}
 #' @references
 #' Li, N., Lee, R. D. and Gerland, P. (2013). Extending the Lee-Carter method to model the rotation 
 #' of age patterns of mortality decline for long-term projections. Demography, 50, 2037-2051.

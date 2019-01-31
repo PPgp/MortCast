@@ -18,10 +18,11 @@ pmdj(e0m, e0f, mxm0, mxf0, ...)
 \item{sex}{Either "male" or "female".}
 
 \item{interp.rho}{Logical controlling if the \eqn{\rho} coefficients should be interpolated 
-(\code{TRUE}) or binned (\code{FALSE}).}
+(\code{TRUE}) or if the raw (binned) version should be used (\code{FALSE}), as stored in 
+the dataset \code{\link{rhoPMD}}.}
 
 \item{kranges}{A vector of size two, giving the min and max of the \eqn{k} parameter which is 
-estimated to match the the target \code{e0}.}
+estimated to match the target \code{e0} using the bisection method.}
 
 \item{keep.lt}{Logical. If \code{TRUE} additional life table columns are kept in the 
 resulting object.}
@@ -39,19 +40,30 @@ resulting object.}
 \item{\dots}{Additional arguments passed to the underlying function.}
 }
 \value{
-List with elements a matrix \code{mx}
+Function \code{pmd} returns a list with the following elements: a matrix \code{mx}
     with the predicted mortality rates. If \code{keep.lt} is \code{TRUE}, it also 
     contains matrices \code{sr} (survival rates), and life table quantities \code{Lx} and \code{lx}.
     If \code{keep.rho} is \code{TRUE}, it contains a matrix \code{rho} where columns correpond 
     to the values in the \code{e0} vector and rows correspond to age groups.
+
+Function \code{pmdj} returns a list with one element for each sex 
+    (\code{male} and \code{female}) where each of them is a list as described above.
 }
 \description{
 Predict age-specific mortality rates using the Pattern of mortality decline (PMD) method.
 }
 \details{
-These functions implements the PMD method published in Andreev et al. (2013). 
+These functions implements the PMD method introduced in Andreev et al. (2013). 
     It assumes that the future decline in age-specific mortality will follow a certain pattern 
-    with the increase in life expectancy at birth. 
+    with the increase in life expectancy at birth (e0): 
+    \deqn{\log mx(t) = \log mx(t-1) - k(t) \rho_x(t)}
+    
+    Here, \eqn{\rho_x(t)} is the age-specific pattern of mortality decline between \eqn{t-1}
+    and \eqn{t}. Such patterns for each sex and various levels of e0 
+    are stored in the dataset \code{\link{rhoPMD}}. The \code{pmd} function can be instructed 
+    to interpolate between neighboring levels of e0 by setting the argument \code{interp.rho} 
+    to \code{TRUE}. The \eqn{k} parameter is estimated to match the e0 level using the bisection 
+    method.
     
     Function \code{pmd} evaluates the method for a single sex, while  \code{pmdj} does it
     for both sexes.
@@ -65,7 +77,7 @@ names(mxf) <- c(0,1, seq(5, 100, by=5))
 # get target e0
 e0f <- as.numeric(subset(e0Fproj, name == country)[-(1:2)])
 # project into future
-pred <- pmd(mxf, e0f, sex = "female")
+pred <- pmd(e0f, mxf, sex = "female")
 # plot first projection in black and the remaining ones in grey 
 plot(pred$mx[,1], type="l", log="y", ylim=range(pred$mx),
     ylab="female mx", xlab="Age", main=country)
@@ -75,7 +87,10 @@ for(i in 2:ncol(pred$mx)) lines(pred$mx[,i], col="grey")
 \references{
 Andreev, K. Gu, D., Gerland, P. (2013). Age Patterns of Mortality Improvement by Level of Life Expectancy at Birth with Applications to Mortality Projections. Paper presented at the Annual Meeting
 of the Population Association of America, New Orleans, LA. \url{http://paa2013.princeton.edu/papers/132554}.
+
+Gu, D., Pelletier, F. and Sawyer, C. (2017). Projecting Age-sex-specific Mortality: A Comparison of the Modified Lee-Carter and Pattern of Mortality Decline Methods, UN Population Division, 
+Technical Paper No. 6. New York: United Nations. \url{https://population.un.org/wpp/Publications/Files/WPP2017_TechnicalPaperNo6.pdf}
 }
 \seealso{
-\code{\link{mortcast}}
+\code{\link{mortcast}}, \code{\link{mortcast.blend}}, \code{\link{rhoPMD}}
 }

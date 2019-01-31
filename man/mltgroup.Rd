@@ -14,6 +14,10 @@ mltj(e0m, e0f, ...)
 
 \item{sex}{Either "male" or "female".}
 
+\item{type}{Type of the model life table. Available options are \dQuote{CD East}, \dQuote{CD North}, 
+\dQuote{CD South}, \dQuote{CD West}, \dQuote{UN Chilean}, \dQuote{UN Far_East_Asian}, 
+\dQuote{UN General}, \dQuote{UN Latin}, \dQuote{UN South_Asian}.}
+
 \item{e0m}{A time series of target male life expectancy.}
 
 \item{e0f}{A time series of target female life expectancy.}
@@ -29,7 +33,8 @@ Predict age-specific mortality rates using Coale-Demeny and UN model life tables
 }
 \details{
 Given a level of life expectancy (e0), sex and a type of model life table, the function 
-    extracts the corresponding mortality pattern while interpolating between neighboring e0 groups. 
+    extracts the corresponding mortality pattern from \code{\link{MLTlookup}}, 
+    while interpolating between neighboring e0 groups.
     Function \code{mlt} is for one sex, while \code{mltj} can be used for both sexes.
 }
 \examples{
@@ -47,7 +52,10 @@ for(i in 2:ncol(mx)) lines(mx[,i], col="grey")
 }
 \references{
 \url{https://population.un.org/wpp/Download/Other/MLT}
+
+Coale, A., P. Demeny, and B. Vaughn. 1983. Regional model life tables and stable 
+populations. 2nd ed. New York: Academic Press.
 }
 \seealso{
-\code{\link{mortcast}}, \code{\link{pmd}}
+\code{\link{mortcast}}, \code{\link{mortcast.blend}}, \code{\link{pmd}}, \code{\link{MLTlookup}}
 }

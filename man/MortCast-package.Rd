@@ -29,6 +29,13 @@ estimating and predicting age-specific mortality rates. The main functions are:
 }
 Functions contained in the package can be used to apply Algorithm 2 in 
 Sevcikova et al. (2016) as shown in the Example below.
+
+Other methods for forecasting mortality rates are available:
+\itemize{
+   \item \code{\link{pmd}}: pattern of mortality decline
+   \item \code{\link{mlt}}: model life tables
+   \item \code{\link{mortcast.blend}}: combining two different methods
+}
 }
 \examples{
 # This example applies Algorithm 2 in Sevcikova et al. (2016) 

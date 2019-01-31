@@ -64,5 +64,6 @@ In: Schoen R. (eds) Dynamic Demographic Analysis. The Springer Series on Demogra
 and Population Analysis, vol 39. Springer, Cham
 }
 \seealso{
-\code{\link{rotate.leecarter}}, \code{\link{leecarter.estimate}}, \code{\link{lileecarter.estimate}}
+\code{\link{rotate.leecarter}}, \code{\link{leecarter.estimate}}, \code{\link{lileecarter.estimate}},
+    \code{\link{mortcast.blend}}
 }
