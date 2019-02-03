@@ -153,9 +153,10 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
 #' @param e0f A time series of target female life expectancy.
 #' @param mxm0 A vector with starting age-specific male mortality rates.
 #' @param mxf0 A vector with starting age-specific female mortality rates.
-#' @param \dots Additional arguments passed to the underlying function. 
 #' @return Function \code{copmd} returns a list with one element for each sex 
 #'     (\code{male} and \code{female}) where each of them is a list as described above.
+#'     In addition if \code{keep.rho} is \code{TRUE}, element \code{rho.sex} 
+#'     gives the sex-dependent (i.e. not averaged) \eqn{\rho_x} coefficient.
 #' 
 copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, kranges = c(0.01, 25), 
                   keep.lt = FALSE, keep.rho = FALSE) {

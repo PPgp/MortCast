@@ -37,8 +37,6 @@ resulting object.}
 \item{mxm0}{A vector with starting age-specific male mortality rates.}
 
 \item{mxf0}{A vector with starting age-specific female mortality rates.}
-
-\item{\dots}{Additional arguments passed to the underlying function.}
 }
 \value{
 Function \code{pmd} returns a list with the following elements: a matrix \code{mx}
@@ -49,6 +47,8 @@ Function \code{pmd} returns a list with the following elements: a matrix \code{m
 
 Function \code{copmd} returns a list with one element for each sex 
     (\code{male} and \code{female}) where each of them is a list as described above.
+    In addition if \code{keep.rho} is \code{TRUE}, element \code{rho.sex} 
+    gives the sex-dependent (i.e. not averaged) \eqn{\rho_x} coefficient.
 }
 \description{
 Predict age-specific mortality rates using the Pattern of mortality decline (PMD) method.
