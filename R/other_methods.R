@@ -12,8 +12,10 @@
 #'     to \code{TRUE}. The \eqn{k} parameter is estimated to match the e0 level using the bisection 
 #'     method.
 #'     
-#'     Function \code{pmd} evaluates the method for a single sex, while  \code{pmdj} does it
-#'     for both sexes.
+#'     Function \code{pmd} evaluates the method for a single sex, while  \code{copmd} does it
+#'     coherently for both sexes. In the latter case, the same \eqn{\rho_x} 
+#'     (namely the average over sex-specific \eqn{\rho_x}) is used 
+#'     for both, male and female.
 #' @param e0 A time series of target life expectancy.
 #' @param mx0 A vector with starting age-specific mortality rates.
 #' @param sex Either "male" or "female".
@@ -66,12 +68,21 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
     npred <- length(e0)
     nage <- length(mx0)
     # initialize results
-    zeromatsr <- matrix(0, nrow=nage-1, ncol=npred)
-    zeromatmx <- matrix(0, nrow=nage, ncol=npred)
-    res <- list(mx=zeromatmx, lx=zeromatmx, sr=zeromatsr, Lx=zeromatsr)
     env <- new.env()
     data("rhoPMD", envir = env)
-    rho <- if(sex == "male") env$RhoMales else env$RhoFemales
+    rho <- .find.pmd.rho(if(sex == "male") env$RhoMales else env$RhoFemales, 
+                         e0, nage, npred, interp.rho = interp.rho)
+    mx0l <- list(mx0)
+    e0l <- list(e0)
+    names(mx0l) <- names(e0l) <- sex
+    res <- .do.copmd(e0l, mx0l, rho = rho, npred = npred, kranges = kranges,
+                     keep.lt = keep.lt)
+    if(keep.rho)
+        res[[sex]]$rho <- this.rho
+    return(res[[sex]])
+}
+
+.find.pmd.rho <- function(rho, e0, nage, npred, interp.rho = FALSE) {
     rhocols <- colnames(rho)
     rho.mids <- as.numeric(rhocols) # mid points
     brks <- c(0, rho.mids + 2.5, 200)
@@ -93,49 +104,89 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
                 e0grid <- seq(rho.mids[irho1], rho.mids[irho2], length = 50)
                 iorde0 <- which.min(abs(e0[time]-e0grid))
                 this.rho[,time] <- apply(rho[,rhocols[c(irho1, irho2)]], 1, 
-                    function(x) return(seq(x[1],x[2], length = 50)[iorde0]))
+                                         function(x) return(seq(x[1],x[2], length = 50)[iorde0]))
             }
         }
     }
-    PMDres <- .C("PMD", as.integer(npred), as.integer(c(female=2, male=1)[sex]), as.integer(nage),
-                as.numeric(mx0), as.numeric(this.rho), as.numeric(e0), 
-                Kl=as.numeric(kranges[1]), Ku=as.numeric(kranges[2]), 
-                LLm = as.numeric(res$Lx), Sr=as.numeric(res$sr), 
-                lx=as.numeric(res$lx), Mx=as.numeric(res$mx))
-    ages <- names(mx0)
-    if(is.null(ages)) ages <- c(0, 1, seq(5, length = nage - 2, by = 5))
-    res$mx <- matrix(PMDres$Mx, nrow=nage, dimnames=list(ages, names(e0)))
-    if(keep.lt) {
-        res$sr <- matrix(PMDres$Sr, nrow=nage-1, dimnames=list(ages[-2], names(e0)))
-        res$Lx <- matrix(PMDres$LLm, nrow=nage-1, dimnames=list(ages[-2], names(e0)))
-        res$lx <- matrix(PMDres$lx, nrow=nage, dimnames=list(ages, names(e0)))
-    } else {
-        res$sr <- NULL
-        res$Lx <- NULL
-        res$lx <- NULL
-    }
-    if(keep.rho)
-        res$rho <- this.rho
-    return(res)
+    return(this.rho)
 }
 
-#' export
+.do.copmd <- function(e0l, mx0l, rho, npred, kranges, keep.lt = FALSE) {
+    # e0l and mx0l should be named lists of e0 and mx0 arrays with names being male and/or female. 
+    # PMD is performed on all elements of the list using the same rho
+    sexes <- names(mx0l)
+    nage <- length(mx0l[[1]])
+    default.ages <- c(0, 1, seq(5, length = nage - 2, by = 5))
+    # initialize results
+    zeromatsr <- matrix(0, nrow=nage-1, ncol=npred)
+    zeromatmx <- matrix(0, nrow=nage, ncol=npred)
+    ressex <- list(mx=zeromatmx, lx=zeromatmx, sr=zeromatsr, Lx=zeromatsr)
+    result <- list(female = ressex, male = ressex)
+    # iterate over sexes - rho stays the same
+    for(sex in sexes) {
+        PMDres <- .C("PMD", as.integer(npred), as.integer(c(female=2, male=1)[sex]), 
+                     as.integer(nage),
+                 as.numeric(mx0l[[sex]]), as.numeric(rho), as.numeric(e0l[[sex]]), 
+                 Kl=as.numeric(kranges[1]), Ku=as.numeric(kranges[2]), 
+                 LLm = as.numeric(result[[sex]]$Lx), Sr=as.numeric(result[[sex]]$sr), 
+                 lx=as.numeric(result[[sex]]$lx), Mx=as.numeric(result[[sex]]$mx))
+        ages <- names(mx0l[[sex]])
+        if(is.null(ages)) ages <- default.ages
+        result[[sex]]$mx <- matrix(PMDres$Mx, nrow=nage, 
+                                   dimnames=list(ages, names(e0l[[sex]])))
+        if(keep.lt) {
+            result[[sex]]$sr <- matrix(PMDres$Sr, nrow=nage-1, dimnames=list(ages[-2], names(e0l[[sex]])))
+            result[[sex]]$Lx <- matrix(PMDres$LLm, nrow=nage-1, dimnames=list(ages[-2], names(e0l[[sex]])))
+            result[[sex]]$lx <- matrix(PMDres$lx, nrow=nage, dimnames=list(ages, names(e0l[[sex]])))
+        } else {
+            result[[sex]]$sr <- NULL
+            result[[sex]]$Lx <- NULL
+            result[[sex]]$lx <- NULL
+        }
+    }
+    return(result)
+}
+
+#' @export
 #' @rdname pmdgroup
 #' @param e0m A time series of target male life expectancy.
 #' @param e0f A time series of target female life expectancy.
 #' @param mxm0 A vector with starting age-specific male mortality rates.
 #' @param mxf0 A vector with starting age-specific female mortality rates.
 #' @param \dots Additional arguments passed to the underlying function. 
-#' @return Function \code{pmdj} returns a list with one element for each sex 
+#' @return Function \code{copmd} returns a list with one element for each sex 
 #'     (\code{male} and \code{female}) where each of them is a list as described above.
 #' 
-pmdj <- function(e0m, e0f, mxm0, mxf0, ...) {
+copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, kranges = c(0.01, 25), 
+                  keep.lt = FALSE, keep.rho = FALSE) {
     e0  <- list(female=e0f, male=e0m)
-    mx  <- list(female=mxf0, male=mxm0)
-    res <- list()
+    mx0  <- list(female=mxf0, male=mxm0)
     for(sex in names(e0)) {
-        if(!is.null(e0[[sex]]))
-            res[[sex]] <- pmd(e0 = e0[[sex]], mx0 = mx[[sex]], ...)
+        # convert to vectors if needed
+        if(length(dim(e0[[sex]])) > 0) 
+            e0[[sex]] <- drop(as.matrix(e0[[sex]])) # if it's a data.frame, it would not drop dimension without as.matrix
+        if(length(dim(mx0[[sex]])) > 0) 
+            mx0[[sex]] <- drop(as.matrix(mx0[[sex]])) 
+    }
+    npred <- length(e0$male)
+    if(length(e0$female) != npred)
+        stop("Mismatch in length of the e0 vectors.")
+    nage <- length(mx0$male)
+    if(length(mx0$female) != nage)
+        stop("Mismatch in length of the mx0 vectors.")
+    # derive rho as an average over male and female
+    env <- new.env()
+    data("rhoPMD", envir = env)
+    rho.male <- .find.pmd.rho(env$RhoMales, e0$male, nage, npred, interp.rho = interp.rho)
+    rho.female <- .find.pmd.rho(env$RhoFemales, e0$female, nage, npred, interp.rho = interp.rho)
+    rho <- (rho.male + rho.female)/2
+    res <- .do.copmd(e0, mx0, rho = rho, npred = npred, kranges = kranges,
+                         keep.lt = keep.lt)
+
+    if(keep.rho) {
+        res$male$rho.sex <- rho.male
+        res$female$rho.sex <- rho.female
+        res$male$rho <- res$female$rho <- rho
     }
     return(res)
 }
@@ -224,7 +275,7 @@ mlt <- function(e0, sex = c("male", "female"), type = "CD West") {
     return(this.mx)
 }
 
-#' export
+#' @export
 #' @rdname mltgroup
 #' @param e0m A time series of target male life expectancy.
 #' @param e0f A time series of target female life expectancy.
@@ -260,7 +311,7 @@ mltj <- function(e0m, e0f, ...) {
 #' @param e0f A time series of future female life expectancy.
 #' @param meth1 Character string giving the name of the first method to blend. It is one of 
 #'     \dQuote{lc}, \dQuote{pmd} or \dQuote{mlt}, corresponding to Coherent Lee-Carter (function \code{\link{mortcast}}), 
-#'      Pattern Mortality Decline (function \code{\link{pmdj}}) and 
+#'      Pattern Mortality Decline (function \code{\link{copmd}}) and 
 #'      Model Life Tables (function \code{\link{mltj}}), respectively.
 #' @param meth2 Character string giving the name of the second method to blend. 
 #'     One of the same choices as \code{meth1}.
@@ -283,7 +334,7 @@ mltj <- function(e0m, e0f, ...) {
 #'     A vector \code{weights} contains the final (possibly interpolated) weights.
 #' @export
 #' 
-#' @seealso \code{\link{mortcast}}, \code{\link{pmdj}}, \code{\link{mltj}}, 
+#' @seealso \code{\link{mortcast}}, \code{\link{copmd}}, \code{\link{mltj}}, 
 #'     \code{\link{cokannisto}}
 #'     
 #' @examples
@@ -329,7 +380,7 @@ mortcast.blend <- function(e0m, e0f,
                           apply.kannisto = TRUE, min.age.groups = 28,
                           meth1.args = NULL, meth2.args = NULL, kannisto.args = NULL) {
 
-    methods.allowed <- list(lc = "mortcast", mlt = "mltj", pmd = "pmdj")
+    methods.allowed <- list(lc = "mortcast", mlt = "mltj", pmd = "copmd")
     meth1 <- match.arg(meth1, choices = names(methods.allowed))
     meth2 <- match.arg(meth2, choices = names(methods.allowed))
     

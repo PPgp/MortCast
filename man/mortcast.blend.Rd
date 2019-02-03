@@ -15,7 +15,7 @@ mortcast.blend(e0m, e0f, meth1 = "lc", meth2 = "mlt", weights = c(1,
 
 \item{meth1}{Character string giving the name of the first method to blend. It is one of 
 \dQuote{lc}, \dQuote{pmd} or \dQuote{mlt}, corresponding to Coherent Lee-Carter (function \code{\link{mortcast}}), 
- Pattern Mortality Decline (function \code{\link{pmdj}}) and 
+ Pattern Mortality Decline (function \code{\link{copmd}}) and 
  Model Life Tables (function \code{\link{mltj}}), respectively.}
 
 \item{meth2}{Character string giving the name of the second method to blend. 
@@ -95,6 +95,6 @@ plotmx(pred2, age.group, "PMD-MLT (age 5-9)")
 
 }
 \seealso{
-\code{\link{mortcast}}, \code{\link{pmdj}}, \code{\link{mltj}}, 
+\code{\link{mortcast}}, \code{\link{copmd}}, \code{\link{mltj}}, 
     \code{\link{cokannisto}}
 }

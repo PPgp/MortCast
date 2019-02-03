@@ -2,13 +2,14 @@
 % Please edit documentation in R/other_methods.R
 \name{pmd}
 \alias{pmd}
-\alias{pmdj}
+\alias{copmd}
 \title{Pattern of Mortality Decline Prediction}
 \usage{
 pmd(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
   kranges = c(0.01, 25), keep.lt = FALSE, keep.rho = FALSE)
 
-pmdj(e0m, e0f, mxm0, mxf0, ...)
+copmd(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, kranges = c(0.01, 25),
+  keep.lt = FALSE, keep.rho = FALSE)
 }
 \arguments{
 \item{e0}{A time series of target life expectancy.}
@@ -46,7 +47,7 @@ Function \code{pmd} returns a list with the following elements: a matrix \code{m
     If \code{keep.rho} is \code{TRUE}, it contains a matrix \code{rho} where columns correpond 
     to the values in the \code{e0} vector and rows correspond to age groups.
 
-Function \code{pmdj} returns a list with one element for each sex 
+Function \code{copmd} returns a list with one element for each sex 
     (\code{male} and \code{female}) where each of them is a list as described above.
 }
 \description{
@@ -65,8 +66,10 @@ These functions implements the PMD method introduced in Andreev et al. (2013).
     to \code{TRUE}. The \eqn{k} parameter is estimated to match the e0 level using the bisection 
     method.
     
-    Function \code{pmd} evaluates the method for a single sex, while  \code{pmdj} does it
-    for both sexes.
+    Function \code{pmd} evaluates the method for a single sex, while  \code{copmd} does it
+    coherently for both sexes. In the latter case, the same \eqn{\rho_x} 
+    (namely the average over sex-specific \eqn{\rho_x}) is used 
+    for both, male and female.
 }
 \examples{
 data(mxF, e0Fproj, package = "wpp2017")
