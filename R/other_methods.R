@@ -78,7 +78,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
     res <- .do.copmd(e0l, mx0l, rho = rho, npred = npred, kranges = kranges,
                      keep.lt = keep.lt)
     if(keep.rho)
-        res[[sex]]$rho <- this.rho
+        res[[sex]]$rho <- rho
     return(res[[sex]])
 }
 
