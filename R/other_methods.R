@@ -91,7 +91,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
     for(time in 1:npred) {
         irho <- min(findInterval(e0[time], brks, left.open = FALSE), length(rhocols))
         rho.level <- rhocols[irho]
-        this.rho[,time] <- rho[,rho.level]
+        this.rho[,time] <- unlist(rho[,rho.level])
         if(interp.rho) { # interpolate coefficients
             if(e0[time] <= rho.mids[irho]) {
                 irho1 <- irho-1
@@ -178,6 +178,12 @@ copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, kranges = c(0.01, 25
     # derive rho as an average over male and female
     env <- new.env()
     data("rhoPMD", envir = env)
+    if(nage != nrow(env$RhoMales)) {
+        warning("Mismatch in length of mx0 and the coefficient dataset. mx truncated to ",
+                nrow(env$RhoMales), " age categories.")
+        nage <- nrow(env$RhoMales)
+        for(sex in names(e0)) mx0[[sex]] <- mx0[[sex]][1:nage]
+    }
     rho.male <- .find.pmd.rho(env$RhoMales, e0$male, nage, npred, interp.rho = interp.rho)
     rho.female <- .find.pmd.rho(env$RhoFemales, e0$female, nage, npred, interp.rho = interp.rho)
     rho <- (rho.male + rho.female)/2
@@ -235,10 +241,12 @@ mlt <- function(e0, sex = c("male", "female"), type = "CD West") {
     if(length(dim(e0)) > 0) e0 <- drop(as.matrix(e0)) # if it's a data.frame, it would not drop dimension without as.matrix
     env <- new.env()
     data("MLTlookup", envir = env)
-    if(! type %in% env$MLTlookup$type) {
+    conv.type <- gsub(" |_", "", type)
+    conv.mlttypes <- gsub(" |_", "", env$MLTlookup$type)
+    if(! conv.type %in% conv.mlttypes) {
         stop("Wrong MLT type. Available types:\n", paste(unique(env$MLTlookup$type), collapse = ", "))
     }
-    mlt <- env$MLTlookup[env$MLTlookup$type == type & 
+    mlt <- env$MLTlookup[conv.mlttypes == conv.type & 
                              env$MLTlookup$sex == sexcode, c("age", "e0", "mx")]
 
     mltw <- reshape(mlt, direction = "wide", timevar = "e0", idvar = "age", sep = "_")

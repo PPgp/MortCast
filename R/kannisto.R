@@ -130,11 +130,12 @@ cokannisto <- function(mxM, mxF,
     est.ages.char <- as.character(est.ages)
     if(any(!est.ages.char %in% rownames(MxeM)))
         stop("est.ages are not included in mxM.")
-    est.data <- rbind(MxeM[est.ages.char,], MxeF[est.ages.char,])
+    est.data <- rbind(MxeM[est.ages.char,,drop=FALSE], MxeF[est.ages.char,,drop=FALSE])
     nest <- length(est.ages)
     kann.pars <- apply(est.data, 2, 
                        function(x) cokannisto.estimate(x[1:nest], x[(nest+1):length(x)], 
-                                                              ages = est.ages))
+                                                              ages = est.ages, fitted = FALSE))
+
     male.pars <- lapply(kann.pars, function(x) x[["male"]]$coefficients)
     resM <- lapply(male.pars, kannisto.predict, ages=proj.ages)
     matresM <- sapply(resM, cbind)
@@ -206,11 +207,12 @@ kannisto.estimate <- function(mx, ages){
 #' @param mxM A vector of male mortality rates.
 #' @param mxF A vector of female mortality rates.
 #' @param ages A vector of ages corresponding to \code{mxM} and \code{mxF}.
+#' @param fitted Logical. If \code{TRUE} the fitted values and residuals are returned.
 #' @return List of two lists, one for male and one for female. Each of the two lists contains the following components:
 #' \describe{
 #'    \item{\code{coefficients}:}{named vector with the coherent Kannisto coefficients \eqn{c} and \eqn{d}. The \eqn{d} values are the same in both lists.}
-#'    \item{\code{fitted.values}:}{the fitted values}
-#'    \item{\code{residuals}:}{input rates minus the fitted values}
+#'    \item{\code{fitted.values}:}{the fitted values (not included if \code{fitted} is \code{FALSE})}
+#'    \item{\code{residuals}:}{input rates minus the fitted values (not included if \code{fitted} is \code{FALSE})}
 #'}
 #' @export
 #' 
@@ -229,24 +231,25 @@ kannisto.estimate <- function(mx, ages){
 #' mxf <- subset(mxF, name == country)[,"2010-2015"]
 #' cokannisto.estimate(mxm[18:21], mxf[18:21], ages = 18:21)
 #' 
-cokannisto.estimate <- function(mxM, mxF, ages){
+cokannisto.estimate <- function(mxM, mxF, ages, fitted = TRUE){
     mx <- c(mxM, mxF)
     y <- log(mx) - log(1-mx)
     x <- c(ages, ages)
     g <- c(rep(1, length(mxM)), rep(0, length(mxF)))
     coefs <- coefficients(lm(y ~ g + x))
     female.coefs <- c(c=exp(coefs[[1]]), d=coefs[['x']])
-    fittedF <- kannisto.predict(female.coefs, ages)
     male.coefs <- c(c=exp(coefs[[1]] + coefs[['g']]), d=coefs[['x']])
-    fittedM <- kannisto.predict(male.coefs, ages)
-    return(list(female = list(coefficients = female.coefs,
-                            fitted.values = fittedF,
-                            residuals = mxF - fittedF),
-                male = list(coefficients = male.coefs,
-                            fitted.values = fittedM,
-                            residuals = mxM - fittedM)
-                    )
-                )
+    result <- list(female = list(coefficients = female.coefs),
+                   male = list(coefficients = male.coefs))
+    if(fitted) {
+        fittedF <- kannisto.predict(female.coefs, ages)
+        result$female$fitted.values <- fittedF
+        result$female$residuals <- mxF - fittedF
+        fittedM <- kannisto.predict(male.coefs, ages)
+        result$male$fitted.values <- fittedM
+        result$male$residuals <- mxM - fittedM
+    }
+    return(result)
 }
 
 #' @title Kannisto Prediction 
