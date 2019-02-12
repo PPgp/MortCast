@@ -4,7 +4,7 @@
 \alias{cokannisto.estimate}
 \title{Coherent Kannisto Estimation}
 \usage{
-cokannisto.estimate(mxM, mxF, ages)
+cokannisto.estimate(mxM, mxF, ages, fitted = TRUE)
 }
 \arguments{
 \item{mxM}{A vector of male mortality rates.}
@@ -12,13 +12,15 @@ cokannisto.estimate(mxM, mxF, ages)
 \item{mxF}{A vector of female mortality rates.}
 
 \item{ages}{A vector of ages corresponding to \code{mxM} and \code{mxF}.}
+
+\item{fitted}{Logical. If \code{TRUE} the fitted values and residuals are returned.}
 }
 \value{
 List of two lists, one for male and one for female. Each of the two lists contains the following components:
 \describe{
    \item{\code{coefficients}:}{named vector with the coherent Kannisto coefficients \eqn{c} and \eqn{d}. The \eqn{d} values are the same in both lists.}
-   \item{\code{fitted.values}:}{the fitted values}
-   \item{\code{residuals}:}{input rates minus the fitted values}
+   \item{\code{fitted.values}:}{the fitted values (not included if \code{fitted} is \code{FALSE})}
+   \item{\code{residuals}:}{input rates minus the fitted values (not included if \code{fitted} is \code{FALSE})}
 }
 }
 \description{
