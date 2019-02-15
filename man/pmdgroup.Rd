@@ -8,8 +8,7 @@
 pmd(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
   kranges = c(0.01, 25), keep.lt = FALSE, keep.rho = FALSE)
 
-copmd(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, kranges = c(0.01, 25),
-  keep.lt = FALSE, keep.rho = FALSE)
+copmd(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ...)
 }
 \arguments{
 \item{e0}{A time series of target life expectancy.}
@@ -37,6 +36,11 @@ resulting object.}
 \item{mxm0}{A vector with starting age-specific male mortality rates.}
 
 \item{mxf0}{A vector with starting age-specific female mortality rates.}
+
+\item{\dots}{Additional arguments passed to the underlying function. For \code{copmd}, in addition to
+\code{kranges} and \code{keep.lt}, it can be \code{sexratio.adjust} which is 
+a logical controlling if a sex-ratio adjustment should be applied to prevent crossovers 
+between male and female mx. In such a case it uses coefficients from the \code{\link{adjcoefPMD}} dataset.}
 }
 \value{
 Function \code{pmd} returns a list with the following elements: a matrix \code{mx}

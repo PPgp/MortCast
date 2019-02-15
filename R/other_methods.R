@@ -111,10 +111,12 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
     return(this.rho)
 }
 
-.do.copmd <- function(e0l, mx0l, rho, npred, kranges, keep.lt = FALSE) {
+.do.copmd <- function(e0l, mx0l, rho, npred, kranges = c(0.01, 25), keep.lt = FALSE, sexratio.adjust = FALSE) {
     # e0l and mx0l should be named lists of e0 and mx0 arrays with names being male and/or female. 
     # PMD is performed on all elements of the list using the same rho
-    sexes <- names(mx0l)
+    sexes <- c("female", "male")
+    if(! ((all(names(mx0l) %in% sexes)) | all(names(e0l) %in% sexes)))
+        stop("Names of the e0l and mx0l lists must be 'male' and/or 'female'.")
     nage <- length(mx0l[[1]])
     default.ages <- c(0, 1, seq(5, length = nage - 2, by = 5))
     # initialize results
@@ -122,12 +124,16 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
     zeromatmx <- matrix(0, nrow=nage, ncol=npred)
     ressex <- list(mx=zeromatmx, lx=zeromatmx, sr=zeromatsr, Lx=zeromatsr)
     result <- list(female = ressex, male = ressex)
+    constraint <- -1
+    nconstr <- 0
     # iterate over sexes - rho stays the same
-    for(sex in sexes) {
+    for(sex in sexes) { # important that female is processed first because of a possible sex constraint
+        if(!sex %in% names(mx0l)) next
         PMDres <- .C("PMD", as.integer(npred), as.integer(c(female=2, male=1)[sex]), 
                      as.integer(nage),
                  as.numeric(mx0l[[sex]]), as.numeric(rho), as.numeric(e0l[[sex]]), 
                  Kl=as.numeric(kranges[1]), Ku=as.numeric(kranges[2]), 
+                 Constr = constraint, Nconstr = as.integer(nconstr),
                  LLm = as.numeric(result[[sex]]$Lx), Sr=as.numeric(result[[sex]]$sr), 
                  lx=as.numeric(result[[sex]]$lx), Mx=as.numeric(result[[sex]]$mx))
         ages <- names(mx0l[[sex]])
@@ -143,6 +149,19 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
             result[[sex]]$Lx <- NULL
             result[[sex]]$lx <- NULL
         }
+        if(sex == "female" && sexratio.adjust && "male" %in% names(mx0l)) { # both sexes must be present if applying constraint
+            # compute minimum male mx
+            env <- new.env()
+            data("adjcoefPMD", envir = env)
+            minmx <- matrix(-1, nrow = nrow(env$adjcoefPMD), ncol = npred)
+            for(iage in 1:nrow(minmx)) {
+                coef <- env$adjcoefPMD[iage, ]
+                minmx[iage,] <-  10^(coef[,"intercept"] + coef[,"lmxf"]*log10(result[[sex]]$mx[iage,]) + 
+                                         coef[,"e0f"]*e0l$female + coef[,"e0f2"]*e0l$female^2 + coef[,"gap"]*(e0l$female - e0l$male))
+            }
+            constraint <- as.numeric(minmx)
+            nconstr <- nrow(minmx)
+        }
     }
     return(result)
 }
@@ -153,13 +172,16 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
 #' @param e0f A time series of target female life expectancy.
 #' @param mxm0 A vector with starting age-specific male mortality rates.
 #' @param mxf0 A vector with starting age-specific female mortality rates.
+#' @param \dots Additional arguments passed to the underlying function. For \code{copmd}, in addition to
+#'      \code{kranges} and \code{keep.lt}, it can be \code{sexratio.adjust} which is 
+#'      a logical controlling if a sex-ratio adjustment should be applied to prevent crossovers 
+#'      between male and female mx. In such a case it uses coefficients from the \code{\link{adjcoefPMD}} dataset.
 #' @return Function \code{copmd} returns a list with one element for each sex 
 #'     (\code{male} and \code{female}) where each of them is a list as described above.
 #'     In addition if \code{keep.rho} is \code{TRUE}, element \code{rho.sex} 
 #'     gives the sex-dependent (i.e. not averaged) \eqn{\rho_x} coefficient.
 #' 
-copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, kranges = c(0.01, 25), 
-                  keep.lt = FALSE, keep.rho = FALSE) {
+copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ...) {
     e0  <- list(female=e0f, male=e0m)
     mx0  <- list(female=mxf0, male=mxm0)
     for(sex in names(e0)) {
@@ -187,8 +209,7 @@ copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, kranges = c(0.01, 25
     rho.male <- .find.pmd.rho(env$RhoMales, e0$male, nage, npred, interp.rho = interp.rho)
     rho.female <- .find.pmd.rho(env$RhoFemales, e0$female, nage, npred, interp.rho = interp.rho)
     rho <- (rho.male + rho.female)/2
-    res <- .do.copmd(e0, mx0, rho = rho, npred = npred, kranges = kranges,
-                         keep.lt = keep.lt)
+    res <- .do.copmd(e0, mx0, rho = rho, npred = npred, ...)
 
     if(keep.rho) {
         res$male$rho.sex <- rho.male

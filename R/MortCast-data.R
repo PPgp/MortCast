@@ -79,5 +79,35 @@
 #' @rdname rhoPMD
 NULL
 
+#' @title Coefficients for Sex Ratio Adjustments in the PMD Method
+#' @name adjcoefPMD
+#' @aliases adjcoefPMD
+#' @docType data
+#' 
+#' @description Data object containing a table of coefficients to be used to adjust the sex ratio in the 
+#' coherent Pattern Mortality Decline method as implemented in the \code{\link{copmd}} function. To invoke 
+#' the adjustment, argument \code{sexratio.adjust} should be set to \code{TRUE}.
+#' 
+#' @usage data(adjcoefPMD)
+#'
+#' @format Data frame containing columns \dQuote{age},  \dQuote{intercept}, \dQuote{lmxf}, \dQuote{e0f}, \dQuote{e0f2}, and \dQuote{gap}. 
+#'     Rows correspond to age groups. The values are estimates of the following  regression 
+#'     \deqn{\log_{10} mx = \beta_0 + \beta_1\log_{10} mx^F + \beta_2 e_0^F + \beta_3 (e_0^F)^2 + \beta_4(e_0^F - e_0^M)}
+#'     The order of the columns starting with intercept corresponds to the order of the coefficients in the above equation.
+#' 
+#' 
+#' @seealso \code{\link{copmd}}
+#' 
+#' @references 
+#' Gu, D., Pelletier, F. and Sawyer, C. (2017). Projecting Age-sex-specific Mortality: A Comparison of the Modified Lee-Carter and Pattern of Mortality Decline Methods, UN Population Division, 
+#' Technical Paper No. 6. New York: United Nations. \url{https://population.un.org/wpp/Publications/Files/WPP2017_TechnicalPaperNo6.pdf}
+#' 
+#' @examples 
+#' data(adjcoefPMD)
+#' adjcoefPMD
+#' 
+#' 
+#' @keywords datasets
+"adjcoefPMD"
 
 
