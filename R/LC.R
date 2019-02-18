@@ -228,6 +228,9 @@ ultimate.bx <- function(bx) {
 #' @param rotate If \code{TRUE} the rotation method of \eqn{b_x} is used as described in Li et al. (2013).
 #' @param keep.lt Logical. If \code{TRUE} additional life table columns are kept in the 
 #'     resulting object.
+#' @param constrain.all.ages By default the method constrains the male mortality to be above female 
+#'     mortality for old ages if the male life expectancy is below the female life expectancy. Setting 
+#'     this argument to \code{TRUE} causes this constraint to be applied to all ages.
 #' @return List with elements \code{female} and \code{male}, each of which contains a matrix \code{mx}
 #'     with the predicted mortality rates. If \code{keep.lt} is \code{TRUE}, it also 
 #'     contains matrices \code{sr} (survival rates), and life table quantities \code{Lx} and \code{lx}.
@@ -261,7 +264,8 @@ ultimate.bx <- function(bx) {
 #'     ylab="female mx", xlab="Age", main=country)
 #' for(i in 2:ncol(pred$female$mx)) lines(pred$female$mx[,i], col="grey")
 #' 
-mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE) {
+mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE, 
+                      constrain.all.ages = FALSE) {
     e0  <- list(female=e0f, male=e0m)
     npred <- length(e0f)
     nage <- length(lc.pars$female$ax)
@@ -282,7 +286,8 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE) {
         LCres <- .C("LC", as.integer(npred), as.integer(c(female=2, male=1)[sex]), as.integer(nage),
                   as.numeric(lc.pars[[sex]]$axt), as.numeric(Bxt), as.numeric(e0[[sex]]), 
                   Kl=as.numeric(kranges[[sex]]$kl), Ku=as.numeric(kranges[[sex]]$ku), 
-                  constrain=as.integer(sex == "male"), 
+                  # 1 for constraining old ages only; 2 for constraining all ages
+                  constrain=as.integer((sex == "male") * ((sex == "male") + (constrain.all.ages == TRUE))), 
                   FMx=as.numeric(result$female$mx), FEop=as.numeric(e0$female),
                   LLm = as.numeric(result[[sex]]$Lx), Sr=as.numeric(result[[sex]]$sr), 
                   lx=as.numeric(result[[sex]]$lx), Mx=as.numeric(result[[sex]]$mx))

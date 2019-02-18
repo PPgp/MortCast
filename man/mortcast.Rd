@@ -4,7 +4,8 @@
 \alias{mortcast}
 \title{Coherent Rotated Lee-Carter Prediction}
 \usage{
-mortcast(e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE)
+mortcast(e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
+  constrain.all.ages = FALSE)
 }
 \arguments{
 \item{e0m}{A time series of future male life expectancy.}
@@ -22,6 +23,10 @@ time periods corresponding to the length of the \code{e0f} and \code{e0m} vector
 
 \item{keep.lt}{Logical. If \code{TRUE} additional life table columns are kept in the 
 resulting object.}
+
+\item{constrain.all.ages}{By default the method constrains the male mortality to be above female 
+mortality for old ages if the male life expectancy is below the female life expectancy. Setting 
+this argument to \code{TRUE} causes this constraint to be applied to all ages.}
 }
 \value{
 List with elements \code{female} and \code{male}, each of which contains a matrix \code{mx}
