@@ -159,6 +159,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
                 minmx[iage,] <-  10^(coef[,"intercept"] + coef[,"lmxf"]*log10(result[[sex]]$mx[iage,]) + 
                                          coef[,"e0f"]*e0l$female + coef[,"e0f2"]*e0l$female^2 + coef[,"gap"]*(e0l$female - e0l$male))
             }
+            minmx[,e0l$male > e0l$female] <- -1 # apply only if e0F >= e0M
             constraint <- as.numeric(minmx)
             nconstr <- nrow(minmx)
         }
