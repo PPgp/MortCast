@@ -266,6 +266,11 @@ ultimate.bx <- function(bx) {
 #' 
 mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE, 
                       constrain.all.ages = FALSE) {
+    # if e0 is a data.frame, convert to vector (it would not drop dimension without as.matrix)
+    if(length(dim(e0m)) > 0) e0m <- drop(as.matrix(e0m)) 
+    if(length(dim(e0f)) > 0) e0f <- drop(as.matrix(e0f)) 
+    
+    # prepare for computation
     e0  <- list(female=e0f, male=e0m)
     npred <- length(e0f)
     nage <- length(lc.pars$female$ax)
@@ -273,14 +278,21 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
     zeromatmx <- matrix(0, nrow=nage, ncol=npred)
     ressex <- list(mx=zeromatmx, lx=zeromatmx, sr=zeromatsr, Lx=zeromatsr)
     result <- list(female = ressex, male = ressex)
+    
+    # rotate bx if needed
     if(rotate)
         Bxt <- rotate.leecarter(lc.pars$bx, lc.pars$ultimate.bx, (e0f + e0m)/2)
     else
         Bxt <- matrix(lc.pars$bx, nrow=nage, ncol=npred)
-    for(sex in c("female", "male")) # allow for time-dependent ax
+    
+    # allow for time-dependent ax
+    for(sex in c("female", "male")) 
         if(is.null(lc.pars[[sex]]$axt)) 
             lc.pars[[sex]]$axt <- matrix(lc.pars[[sex]]$ax, nrow=nrow(Bxt), ncol=npred)
+    
+    # compute ranges for k(t)
     kranges <- .kranges(Bxt, lc.pars$male$axt, lc.pars$female$axt)
+    
     #Get the projected kt from e0, and make projection of Mx
     for (sex in c("female", "male")) { # iterate over female and male (order matters because of the constrain)
         LCres <- .C("LC", as.integer(npred), as.integer(c(female=2, male=1)[sex]), as.integer(nage),

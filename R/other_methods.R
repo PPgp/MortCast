@@ -111,7 +111,8 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
     return(this.rho)
 }
 
-.do.copmd <- function(e0l, mx0l, rho, npred, kranges = c(0.01, 25), keep.lt = FALSE, sexratio.adjust = FALSE) {
+.do.copmd <- function(e0l, mx0l, rho, npred, kranges = c(0.01, 25), keep.lt = FALSE, 
+                      sexratio.adjust = FALSE, adjust.with.mxf = FALSE) {
     # e0l and mx0l should be named lists of e0 and mx0 arrays with names being male and/or female. 
     # PMD is performed on all elements of the list using the same rho
     sexes <- c("female", "male")
@@ -151,13 +152,17 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
         }
         if(sex == "female" && sexratio.adjust && "male" %in% names(mx0l)) { # both sexes must be present if applying constraint
             # compute minimum male mx
-            env <- new.env()
-            data("adjcoefPMD", envir = env)
-            minmx <- matrix(-1, nrow = nrow(env$adjcoefPMD), ncol = npred)
-            for(iage in 1:nrow(minmx)) {
-                coef <- env$adjcoefPMD[iage, ]
-                minmx[iage,] <-  10^(coef[,"intercept"] + coef[,"lmxf"]*log10(result[[sex]]$mx[iage,]) + 
+            if(adjust.with.mxf) { # using female mx
+                minmx <- result$female$mx
+            } else { # using Danan's regression
+                env <- new.env()
+                data("adjcoefPMD", envir = env)
+                minmx <- matrix(-1, nrow = nrow(env$adjcoefPMD), ncol = npred)
+                for(iage in 1:nrow(minmx)) {
+                    coef <- env$adjcoefPMD[iage, ]
+                    minmx[iage,] <-  10^(coef[,"intercept"] + coef[,"lmxf"]*log10(result[[sex]]$mx[iage,]) + 
                                          coef[,"e0f"]*e0l$female + coef[,"e0f2"]*e0l$female^2 + coef[,"gap"]*(e0l$female - e0l$male))
+                }
             }
             minmx[,e0l$male > e0l$female] <- -1 # apply only if e0F >= e0M
             constraint <- as.numeric(minmx)
@@ -176,7 +181,10 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
 #' @param \dots Additional arguments passed to the underlying function. For \code{copmd}, in addition to
 #'      \code{kranges} and \code{keep.lt}, it can be \code{sexratio.adjust} which is 
 #'      a logical controlling if a sex-ratio adjustment should be applied to prevent crossovers 
-#'      between male and female mx. In such a case it uses coefficients from the \code{\link{adjcoefPMD}} dataset.
+#'      between male and female mx. In such a case it uses coefficients from the \code{\link{adjcoefPMD}} dataset. 
+#'      However, if the argument \code{adjust.with.mxf} is set to \code{TRUE} (in addition to \code{sexratio.adjust}),
+#'      the adjustment is done using the 
+#'      female mortality rates as a lower constraint for male mortality rates.
 #' @return Function \code{copmd} returns a list with one element for each sex 
 #'     (\code{male} and \code{female}) where each of them is a list as described above.
 #'     In addition if \code{keep.rho} is \code{TRUE}, element \code{rho.sex} 
