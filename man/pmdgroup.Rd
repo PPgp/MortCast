@@ -40,7 +40,10 @@ resulting object.}
 \item{\dots}{Additional arguments passed to the underlying function. For \code{copmd}, in addition to
 \code{kranges} and \code{keep.lt}, it can be \code{sexratio.adjust} which is 
 a logical controlling if a sex-ratio adjustment should be applied to prevent crossovers 
-between male and female mx. In such a case it uses coefficients from the \code{\link{adjcoefPMD}} dataset.}
+between male and female mx. In such a case it uses coefficients from the \code{\link{adjcoefPMD}} dataset. 
+However, if the argument \code{adjust.with.mxf} is set to \code{TRUE} (in addition to \code{sexratio.adjust}),
+the adjustment is done using the 
+female mortality rates as a lower constraint for male mortality rates.}
 }
 \value{
 Function \code{pmd} returns a list with the following elements: a matrix \code{mx}
