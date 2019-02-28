@@ -5,7 +5,7 @@
 \alias{mltj}
 \title{Model Life Tables Mortality Patterns}
 \usage{
-mlt(e0, sex = c("male", "female"), type = "CD West")
+mlt(e0, sex = c("male", "female"), type = "CD_West")
 
 mltj(e0m, e0f, ...)
 }
@@ -14,9 +14,9 @@ mltj(e0m, e0f, ...)
 
 \item{sex}{Either "male" or "female".}
 
-\item{type}{Type of the model life table. Available options are \dQuote{CD East}, \dQuote{CD North}, 
-\dQuote{CD South}, \dQuote{CD West}, \dQuote{UN Chilean}, \dQuote{UN Far_East_Asian}, 
-\dQuote{UN General}, \dQuote{UN Latin}, \dQuote{UN South_Asian}.}
+\item{type}{Type of the model life table. Available options are \dQuote{CD_East}, \dQuote{CD_North}, 
+\dQuote{CD_South}, \dQuote{CD_West}, \dQuote{UN_Chilean}, \dQuote{UN_Far_Eastern}, 
+\dQuote{UN_General}, \dQuote{UN_Latin_American}, \dQuote{UN_South_Asian}.}
 
 \item{e0m}{A time series of target male life expectancy.}
 
@@ -43,7 +43,7 @@ country <- "Uganda"
 # get target e0
 e0f <- as.numeric(subset(e0Fproj, name == country)[-(1:2)])
 # project into future using life table Cole-Demeny North
-mx <- mlt(e0f, sex = "female", type = "CD North")
+mx <- mlt(e0f, sex = "female", type = "CD_North")
 # plot first projection in black and the remaining ones in grey 
 plot(mx[,1], type="l", log="y", ylim=range(mx),
     ylab="female mx", xlab="Age", main=country)

@@ -69,7 +69,7 @@ e0m <- as.numeric(subset(e0Mproj, name == country)[-(1:2)])
 # Blend LC and MLT
 pred1 <- mortcast.blend(e0m, e0f, meth1 = "lc", meth2 = "mlt",
     meth1.args = list(lc.pars = lcest),
-    meth2.args = list(type = "CD North"),
+    meth2.args = list(type = "CD_North"),
     weights = c(1,0.25))
 # Blend PMD and MLT
 pred2 <- mortcast.blend(e0m, e0f, meth1 = "pmd", meth2 = "mlt",

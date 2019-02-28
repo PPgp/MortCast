@@ -7,14 +7,14 @@
 #'
 #' @format Data frame with the following columns:
 #' \describe{
-#' \item{type}{Type of the model life table. Available options are \dQuote{CD East}, \dQuote{CD North}, 
-#' \dQuote{CD South}, \dQuote{CD West}, \dQuote{UN Chilean}, \dQuote{UN Far_East_Asian}, 
-#' \dQuote{UN General}, \dQuote{UN Latin}, \dQuote{UN South_Asian}. 
+#' \item{type}{Type of the model life table. Available options are \dQuote{CD_East}, \dQuote{CD_North}, 
+#' \dQuote{CD_South}, \dQuote{CD_West}, \dQuote{UN_Chilean}, \dQuote{UN_Far_Eastern}, 
+#' \dQuote{UN_General}, \dQuote{UN_Latin_American}, \dQuote{UN_South_Asian}. 
 #' For the CD types, see Coale et al. (1983). For the UN types, see \url{https://population.un.org/wpp/Download/Other/MLT}.
 #' }
 #' \item{sex}{Code for distinguishing sexes. 1 is for male, 2 is for female.}
 #' \item{age}{Starting age of an age group. These are 0, 1, 5, 10, ... 130.}
-#' \item{e0}{Level of life expectancy, starting at 20 and going by steps of 2.5 up to 105.}
+#' \item{e0}{Level of life expectancy, starting at 20 and going by steps of 2.5 up to 130.}
 #' \item{mx}{Mortality rates.}
 #' \item{lx, Lx, sx}{Other life table columns.}
 #'}
@@ -31,7 +31,7 @@
 #' data(MLTlookup)
 #' str(MLTlookup)
 #' # CD West life table for male at e0 of 80
-#' subset(MLTlookup, type == "CD West" & sex == 1 & e0 == 80)
+#' subset(MLTlookup, type == "CD_West" & sex == 1 & e0 == 80)
 #' 
 #' @keywords datasets
 "MLTlookup"
