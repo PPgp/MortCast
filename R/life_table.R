@@ -22,7 +22,7 @@ life.table <- function(mx, sex = c("male", "female"), ages = names(mx), radix = 
     sex <- match.arg(sex)
     sex <- list(male=1, female=2)[[sex]]
     if(is.null(ages))
-        ages <- c(0, 1, seq(5, length(mx)-2))
+        ages <- c(0, 1, seq(5, length = length(mx)-2, by = 5))
     nage <- length(ages)
     Lx <- lx <- qx <- Tx <- sx <- dx <- ax <- rep(0, nage)
     nagem1 <- nage-1
