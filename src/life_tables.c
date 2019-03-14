@@ -114,6 +114,46 @@ void doLifeTable(int sex, int nage, double *mx,
 	ax[nage] = Lx[nage];
 }
 
+/*****************************************************************************
+ * Wrapper for abridged life table function
+ *****************************************************************************/
+
+void LifeTable(int *sex, int *nage, double *mx, 
+               double *Lx, double *lx, double *qx, double *ax, double *Tx, double *sx, double *dx) {
+    int i;
+    
+    /* original implementation lacking Tx, sx, dx */
+    doLifeTable(*sex, *nage, mx, Lx, lx, qx, ax);
+    
+    /* calculating additional life table columns dx, Tx, sx */
+    
+    /* TB: dx */
+    for(i = 0; i < *nage; ++i) {
+        dx[i] = lx[i] - lx[i+1];
+    }
+    dx[*nage] = lx[*nage];
+    
+    /*TB: Tx */
+    Tx[*nage] = Lx[*nage];
+    for (i = *nage-1; i >= 0; i--) {
+        Tx[i] = Tx[i+1] + Lx[i];
+    }       
+    /* TB: sx */
+    /* first age group is survival from births to age 0-5 */
+    sx[0] = (Lx[0] + Lx[1]) / 5*lx[0];
+    
+    /* second age group is survival age 0-5 to age 5 - 10 */
+    sx[1] = Lx[2] / (Lx[0] + Lx[1]);
+    
+    /* middle age groups  */
+    for(i = 2; i < *nage-1; ++i) {
+        sx[i] = Lx[i+1] / Lx[i];
+    }
+    /* last but one age group */
+    sx[*nage-1] = Lx[*nage] / (Lx[*nage-1]+Lx[*nage]);
+    sx[*nage]= 0.0;
+    
+}
 
 
 /* Function returns collapsed Lx and lx columns of life table */
