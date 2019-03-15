@@ -23,7 +23,7 @@ double sum(double *x, int dim) {
  *****************************************************************************/
 double * get_a05(double mx0, int sex) {
 	static double ax[2];
-	if(sex > 1) {/* female*/
+	if(sex == 2) {/* female*/
 		if (mx0 < 0.107) {
 			ax[0] = 0.053 + 2.8 * mx0;      /*1a0*/
 			ax[1] = 1.522 - 1.518 * mx0;    /*4a1*/
@@ -31,17 +31,28 @@ double * get_a05(double mx0, int sex) {
 			ax[0] = 0.35;
 			ax[1] = 1.361;
 		}
-	} else { /* male */
-		if (mx0 < 0.107) {
-			ax[0] = 0.045 + 2.684 * mx0;
-			ax[1] = 1.651 - 2.816 * mx0;
-		} else {
-			ax[0] = 0.33;
-			ax[1] = 1.352;
-		}
+	} else { 
+	    if(sex == 1) { /* male */
+		    if (mx0 < 0.107) {
+			    ax[0] = 0.045 + 2.684 * mx0;
+			    ax[1] = 1.651 - 2.816 * mx0;
+		    } else {
+			    ax[0] = 0.33;
+			    ax[1] = 1.352;
+		    }
+	    } else { /* total */
+            if (mx0 < 0.107) {
+                ax[0] = 0.049 + 2.742 * mx0;
+                ax[1] = 1.5865 - 2.167 * mx0;
+            } else {
+                ax[0] = 0.34;
+                ax[1] = 1.3565;
+            }
+	    }
 	}
 	return(ax);
 }
+
 /*****************************************************************************
  * Function calculates an abridged life table from age-specific mortality 
  * rates
@@ -89,7 +100,7 @@ void doLifeTable(int sex, int nage, double *mx,
 		ax[i] = 2.5 - (25 / 12.0) * (mx[i] - k);
 	}
 	/* penultimate ax calculated with k from previous age group */
-	ax[nage1] = 2.5 - (25 / 12.0) * (mx[i] - k);
+	ax[nage1] = 2.5 - (25 / 12.0) * (mx[nage1 - 1] - k);
 
 	/* correcting out-of (reasonable) bounds ax for older ages             */ 
 	/* 0.97=1-5*exp(-5)/(1-exp(-5)), for constant mu=1, Kannisto assumption*/
@@ -115,44 +126,106 @@ void doLifeTable(int sex, int nage, double *mx,
 }
 
 /*****************************************************************************
- * Wrapper for abridged life table function
+ * Function calculates a life table for one-year age groups 
+ * from age-specific mortality 
  *****************************************************************************/
+void doLifeTable1y(int sex, int nage, double *mx, 
+                 double *Lx, double *lx, double *qx, double *ax) {
+    
+    int i;
+    double k;     /* correcting factor in Greville approximation */
+    double *tmpa; /* pointer to estimated ax[0] and ax[1] values */
+    int nage1;
+    nage1 = nage -1;
 
-void LifeTable(int *sex, int *nage, double *mx, 
-               double *Lx, double *lx, double *qx, double *ax, double *Tx, double *sx, double *dx) {
+    tmpa = get_a05(mx[0], sex); 
+    ax[0] = tmpa[0]; /* use only ax[0] */
+
+    for(i = 1; i < nage1; ++i) {
+        k = 0.5 * log(fmax(mx[i+1] / fmax(mx[i-1], DBL_MIN), DBL_MIN));
+        ax[i] = 0.5 - (1 / 12.0) * (mx[i] - k);
+    }
+    /* penultimate ax calculated with k from previous age group */
+    ax[nage1] = 0.5 - (1 / 12.0) * (mx[nage1 - 1] - k);
+    
+    /* correcting out-of (reasonable) bounds ax for older ages             */ 
+    /* 0.42=1-exp(-1)/(1-exp(-1)), for constant mu=1, Kannisto assumption*/
+    /*for(i = 10; i < nage; i++) {
+        if(ax[i] < 0.97) {
+            ax[i] = 0.97;
+        }
+    }*/
+    
+    lx[0] = 1;       /* l0 */
+    
+    /* caculate life table variables from mx and ax */
+    for(i = 0; i < nage; ++i) {
+        qx[i] = mx[i] / (1 + (1 - ax[i]) * mx[i]);
+        lx[i+1] = fmax(lx[i] * (1-qx[i]), DBL_MIN);
+        Lx[i] = lx[i+1] + ax[i] * (lx[i] - lx[i+1]);
+    }
+			
+    /* Open ended age interval */
+    Lx[nage] = lx[nage] / fmax(mx[nage], DBL_MIN); 
+    qx[nage] = 1.0;
+    ax[nage] = Lx[nage];
+}
+
+void LTextraColumns(int nx, int nage, double *lx, double *Lx, 
+                    double *dx, double *Tx, double *sx) {
+    /* calculating additional life table columns dx, Tx, sx */
     int i;
     
-    /* original implementation lacking Tx, sx, dx */
-    doLifeTable(*sex, *nage, mx, Lx, lx, qx, ax);
-    
-    /* calculating additional life table columns dx, Tx, sx */
-    
-    /* TB: dx */
-    for(i = 0; i < *nage; ++i) {
+    /* dx */
+    for(i = 0; i < nage; ++i) {
         dx[i] = lx[i] - lx[i+1];
     }
-    dx[*nage] = lx[*nage];
+    dx[nage] = lx[nage];
     
-    /*TB: Tx */
-    Tx[*nage] = Lx[*nage];
-    for (i = *nage-1; i >= 0; i--) {
+    /* Tx */
+    Tx[nage] = Lx[nage];
+    for (i = nage-1; i >= 0; i--) {
         Tx[i] = Tx[i+1] + Lx[i];
     }       
-    /* TB: sx */
-    /* first age group is survival from births to age 0-5 */
-    sx[0] = (Lx[0] + Lx[1]) / 5*lx[0];
+    /* sx */
+    /* first age group is survival from births to the second age group */
+    sx[0] = (Lx[0] + Lx[1]) / nx*lx[0];
     
-    /* second age group is survival age 0-5 to age 5 - 10 */
-    sx[1] = Lx[2] / (Lx[0] + Lx[1]);
-    
+    if(nx > 1) {
+        /* second age group is survival age 0-5 to age 5 - 10 */
+        sx[1] = Lx[2] / (Lx[0] + Lx[1]);
+    } else {
+        sx[1] = Lx[2] / Lx[1];
+    }
     /* middle age groups  */
-    for(i = 2; i < *nage-1; ++i) {
+    for(i = 2; i < nage-1; ++i) {
         sx[i] = Lx[i+1] / Lx[i];
     }
     /* last but one age group */
-    sx[*nage-1] = Lx[*nage] / (Lx[*nage-1]+Lx[*nage]);
-    sx[*nage]= 0.0;
-    
+    sx[nage-1] = Lx[nage] / (Lx[nage-1]+Lx[nage]);
+    sx[nage]= 0.0;
+}
+
+/*****************************************************************************
+ * Wrapper for abridged life table function
+ *****************************************************************************/
+
+void LifeTableAbridged(int *sex, int *nage, double *mx, 
+               double *Lx, double *lx, double *qx, double *ax, double *Tx, double *sx, double *dx) {
+
+    doLifeTable(*sex, *nage, mx, Lx, lx, qx, ax);
+    LTextraColumns(5, *nage, lx, Lx, dx, Tx, sx);
+}
+
+/*****************************************************************************
+ * Wrapper for 1-year-age-groups life table function
+ *****************************************************************************/
+
+void LifeTable(int *sex, int *nage, double *mx, 
+                       double *Lx, double *lx, double *qx, double *ax, double *Tx, double *sx, double *dx) {
+
+    doLifeTable1y(*sex, *nage, mx, Lx, lx, qx, ax);
+    LTextraColumns(1, *nage, lx, Lx, dx, Tx, sx);
 }
 
 

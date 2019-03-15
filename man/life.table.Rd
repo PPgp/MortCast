@@ -4,20 +4,24 @@
 \alias{life.table}
 \title{Life Table Function}
 \usage{
-life.table(mx, sex = c("male", "female"), ages = names(mx),
+life.table(mx, sex = c("male", "female", "both"), abridged = TRUE,
   radix = 1, open.age = 130)
 }
 \arguments{
-\item{mx}{Vector of age-specific mortality rates nmx. The elements correspond to 1m0, 4m1, 5m5, 5m10, \dots. 
-It can have no more than 28 elements which corresponds to age up to 130.}
+\item{mx}{Vector of age-specific mortality rates nmx. If \code{abridged} is \code{TRUE} (default), 
+the elements correspond to 1m0, 4m1, 5m5, 5m10, \dots. 
+If \code{abridged} is \code{FALSE}, they correspond to 1m0, 1m1, 1m2, 1m3, \dots.}
 
-\item{sex}{For which sex is the life table.}
+\item{sex}{Which sex the mortality rates correspond to.}
 
-\item{ages}{Defines the age groups of \code{mx}. If \code{mx} has no names, the \code{ages} corresponds to 0, 1, 5, 10, \dots.}
+\item{abridged}{Is it an abridged life table (\code{TRUE}, default) or not (\code{FALSE}). 
+In the former case, the \code{mx} vector is interpreted as corresponding to age groups 0, 1-4, 5-9, 10-14, \dots.
+If \code{FALSE}, the \code{mx} vector is interpreted as corresponding to one-year age groups, i.e. 0, 1, 2, 3, \dots.}
 
 \item{radix}{Base of the life table.}
 
-\item{open.age}{Open age group. If smaller than the last age group of \code{mx}, the life table is truncated.}
+\item{open.age}{Open age group. If smaller than the last age group of \code{mx}, the life table is truncated. 
+It does not have any effect if larger than the last age group.}
 }
 \description{
 Function for obtaining life table quantities from mortality rates.
@@ -30,7 +34,6 @@ data(mxF, e0Fproj, package = "wpp2017")
 # get female mortality of Mexico for the current year
 country <- "Mexico"
 mxf <- subset(mxF, name == country)[,"2010-2015"]
-names(mxf) <- c(0,1, seq(5, 100, by=5))
 life.table(mxf, sex = "female")
 
 }

@@ -1,28 +1,36 @@
 #' @title Life Table Function
 #' @description Function for obtaining life table quantities from mortality rates.
 #' @details Computes a life table corresponding to given mortality rates for 5-years age groups. 
-#' @param mx Vector of age-specific mortality rates nmx. The elements correspond to 1m0, 4m1, 5m5, 5m10, \dots. 
-#'    It can have no more than 28 elements which corresponds to age up to 130. 
-#' @param sex For which sex is the life table.
-#' @param ages Defines the age groups of \code{mx}. If \code{mx} has no names, the \code{ages} corresponds to 0, 1, 5, 10, \dots.
+#' @param mx Vector of age-specific mortality rates nmx. If \code{abridged} is \code{TRUE} (default), 
+#'    the elements correspond to 1m0, 4m1, 5m5, 5m10, \dots. 
+#'    If \code{abridged} is \code{FALSE}, they correspond to 1m0, 1m1, 1m2, 1m3, \dots.
+#' @param sex Which sex the mortality rates correspond to. 
+#' @param abridged Is it an abridged life table (\code{TRUE}, default) or not (\code{FALSE}). 
+#'    In the former case, the \code{mx} vector is interpreted as corresponding to age groups 0, 1-4, 5-9, 10-14, \dots.
+#'    If \code{FALSE}, the \code{mx} vector is interpreted as corresponding to one-year age groups, i.e. 0, 1, 2, 3, \dots.
 #' @param radix Base of the life table.
 #' @param open.age Open age group. If smaller than the last age group of \code{mx}, the life table is truncated. 
+#'    It does not have any effect if larger than the last age group.
 #' @export
 #' @examples
 #' data(mxF, e0Fproj, package = "wpp2017")
 #' # get female mortality of Mexico for the current year
 #' country <- "Mexico"
 #' mxf <- subset(mxF, name == country)[,"2010-2015"]
-#' names(mxf) <- c(0, 1, seq(5, 100, by=5))
 #' life.table(mxf, sex = "female")
 #' 
-life.table <- function(mx, sex = c("male", "female"), ages = names(mx), radix = 1, open.age = 130){
+life.table <- function(mx, sex = c("male", "female", "both"), abridged = TRUE, radix = 1, open.age = 130){
     # The first two elements of mx must correspond to 0-1 and 1-4. 
     # If include01 is FALSE, the first two age groups of the results are collapsed to 0-5
     sex <- match.arg(sex)
-    sex <- list(male=1, female=2)[[sex]]
-    if(is.null(ages))
+    sex <- list(male=1, female=2, both=3)[[sex]]
+    if(abridged) {
         ages <- c(0, 1, seq(5, length = length(mx)-2, by = 5))
+        LTfct <- "LifeTableAbridged"
+    } else {
+        ages <- seq(0, length = length(mx))
+        LTfct <- "LifeTable"
+    }
     nage <- length(ages)
     Lx <- lx <- qx <- Tx <- sx <- dx <- ax <- rep(0, nage)
     nagem1 <- nage-1
@@ -36,8 +44,8 @@ life.table <- function(mx, sex = c("male", "female"), ages = names(mx), radix = 
         return(data.frame(age=resage, mx=mx[1:nresage], qx=nas, lx=nas, dx=nas, Lx=nas, 
                           sx=nas, Tx=nas, ex=nas, ax=nas))
     
-    LTC <- .C("LifeTable", as.integer(sex), as.integer(nagem1), as.numeric(mx), 
-              Lx=Lx, lx=lx, qx=qx, ax=ax, Tx=Tx, sx=sx, dx=dx)
+    LTC <- .C(LTfct, as.integer(sex), as.integer(nagem1), as.numeric(mx), 
+              Lx=Lx, lx=lx, qx=qx, ax=ax, Tx=Tx, sx=sx, dx=dx, PACKAGE = "MortCast")
     LT <- data.frame(age=as.integer(ages), mx=mx, qx=LTC$qx, lx=LTC$lx, dx=LTC$dx, Lx=LTC$Lx,  sx=LTC$sx, Tx=LTC$Tx, 
                      ex=LTC$Tx/LTC$lx, ax=LTC$ax)
     LT$ax[nage] <- LT$ex[nage]
@@ -63,7 +71,9 @@ life.table <- function(mx, sex = c("male", "female"), ages = names(mx), radix = 
         LT$sx[nresage-1] <- LT$Tx[nresage]/LT$Tx[nresage-1]
         LT$sx[nresage] <- NA
         LT$ax[nresage] <- LT$ex[nresage] ## for open age group ax = ex
-    } 
-    rownames(LT) <- c(paste(LT$age[-nresage], pmax(LT$age[-1]-1,1), sep="-"), paste0(LT$age[nresage], "+"))
+    }
+    if(abridged)
+        rownames(LT) <- c(paste(LT$age[-nresage], pmax(LT$age[-1]-1,1), sep="-"), paste0(LT$age[nresage], "+"))
+    else rownames(LT) <- LT$age
     return(LT)
 }
