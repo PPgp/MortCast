@@ -5,7 +5,7 @@
 \title{Lee-Carter Estimation}
 \usage{
 leecarter.estimate(mx, ax.index = NULL, ax.smooth = FALSE,
-  bx.postprocess = TRUE)
+  bx.postprocess = TRUE, nx = 5)
 }
 \arguments{
 \item{mx}{A matrix of age-specific mortality rates where rows correspond to age groups
@@ -17,6 +17,10 @@ By default all time periods are used.}
 \item{ax.smooth}{Logical allowing to smooth the \eqn{a_x} over ages.}
 
 \item{bx.postprocess}{Logical determining if numerical anomalies in \eqn{b_x} should be dealt with.}
+
+\item{nx}{Size of age groups. By default ages are determined by rownames of \code{mx}. This argument is only used if 
+\code{mx} has no rownames. If \code{nx} is 5, the age groups are 0, 1, 5, 10, \dots. For \code{nx} equals 1, 
+the age groups are 0, 1, 2, 3, \dots.}
 }
 \value{
 List with elements \code{ax}, \code{bx} and \code{kt} corresponding to the estimated parameters.

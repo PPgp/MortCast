@@ -12,6 +12,9 @@
 #'     By default all time periods are used.
 #' @param ax.smooth Logical allowing to smooth the \eqn{a_x} over ages.
 #' @param bx.postprocess Logical determining if numerical anomalies in \eqn{b_x} should be dealt with.
+#' @param nx Size of age groups. By default ages are determined by rownames of \code{mx}. This argument is only used if 
+#'     \code{mx} has no rownames. If \code{nx} is 5, the age groups are 0, 1, 5, 10, \dots. For \code{nx} equals 1, 
+#'     the age groups are 0, 1, 2, 3, \dots.
 #' @return List with elements \code{ax}, \code{bx} and \code{kt} corresponding to the estimated parameters.
 #' @export
 #' @seealso \code{\link{mortcast}}, \code{\link{lileecarter.estimate}}
@@ -34,10 +37,12 @@
 #' lines(lc.ax.last$ax, col="blue")
 #' 
 leecarter.estimate <- function(mx, ax.index = NULL, ax.smooth = FALSE, 
-                               bx.postprocess = TRUE) {
+                               bx.postprocess = TRUE, nx = 5) {
     lmx <- log(mx)
     if(length(dim(lmx))==0)
         lmx <- as.matrix(lmx)
+    if(is.null(rownames(lmx))) # default ages
+        rownames(lmx) <- if(nx > 1) c(0,1, seq(nx, by=nx, length=nrow(lmx)-2)) else 0:(nrow(lmx)-1)
     nest <- ncol(lmx)
     if(is.null(ax.index)) ax.index <- 1:nest
     ax <- apply(lmx[,ax.index, drop=FALSE], 1, sum, na.rm=TRUE) / length(ax.index)
@@ -58,10 +63,7 @@ bx.estimate <- function(lmx, ax, kt, postprocess=TRUE) {
     bx <- x1/x2
     if(postprocess)
         bx <- .finish.bx(bx)
-    ages <- rownames(lmx)
-    if(is.null(ages)) # default ages
-        ages <- c(0,1, seq(5, by=5, length=nrow(lmx)-2))
-    names(bx) <- ages
+    names(bx) <- rownames(lmx)
     return(bx)
 }
 
