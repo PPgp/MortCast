@@ -1,5 +1,5 @@
 #' @title Pattern of Mortality Decline Prediction
-#' @description Predict age-specific mortality rates using the Pattern of mortality decline (PMD) method.
+#' @description Predict age-specific mortality rates using the Pattern of mortality decline (PMD) method (Andreev et al. 2013).
 #' @details These functions implements the PMD method introduced in Andreev et al. (2013). 
 #'     It assumes that the future decline in age-specific mortality will follow a certain pattern 
 #'     with the increase in life expectancy at birth (e0): 
@@ -7,7 +7,7 @@
 #'     
 #'     Here, \eqn{\rho_x(t)} is the age-specific pattern of mortality decline between \eqn{t-1}
 #'     and \eqn{t}. Such patterns for each sex and various levels of e0 
-#'     are stored in the dataset \code{\link{rhoPMD}}. The \code{pmd} function can be instructed 
+#'     are stored in the dataset \code{\link{PMDrho}}. The \code{pmd} function can be instructed 
 #'     to interpolate between neighboring levels of e0 by setting the argument \code{interp.rho} 
 #'     to \code{TRUE}. The \eqn{k} parameter is estimated to match the e0 level using the bisection 
 #'     method.
@@ -16,12 +16,12 @@
 #'     coherently for both sexes. In the latter case, the same \eqn{\rho_x} 
 #'     (namely the average over sex-specific \eqn{\rho_x}) is used 
 #'     for both, male and female.
-#' @param e0 A time series of target life expectancy.
+#' @param e0 A vector of target life expectancy, one element for each predicted time point. 
 #' @param mx0 A vector with starting age-specific mortality rates.
 #' @param sex Either "male" or "female".
 #' @param interp.rho Logical controlling if the \eqn{\rho} coefficients should be interpolated 
 #'     (\code{TRUE}) or if the raw (binned) version should be used (\code{FALSE}), as stored in 
-#'     the dataset \code{\link{rhoPMD}}.
+#'     the dataset \code{\link{PMDrho}}.
 #' @param kranges A vector of size two, giving the min and max of the \eqn{k} parameter which is 
 #'     estimated to match the target \code{e0} using the bisection method.
 #' @param keep.lt Logical. If \code{TRUE} additional life table columns are kept in the 
@@ -34,7 +34,7 @@
 #'     to the values in the \code{e0} vector and rows correspond to age groups.
 #' @export
 #' 
-#' @seealso \code{\link{mortcast}}, \code{\link{mortcast.blend}}, \code{\link{rhoPMD}}
+#' @seealso \code{\link{mortcast}}, \code{\link{mortcast.blend}}, \code{\link{PMDrho}}
 #' @references
 #' Andreev, K. Gu, D., Gerland, P. (2013). Age Patterns of Mortality Improvement by Level of Life Expectancy at Birth with Applications to Mortality Projections. Paper presented at the Annual Meeting
 #' of the Population Association of America, New Orleans, LA. \url{http://paa2013.princeton.edu/papers/132554}.
@@ -69,7 +69,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
     nage <- length(mx0)
     # initialize results
     env <- new.env()
-    data("rhoPMD", envir = env)
+    data("PMDrho", envir = env)
     rho <- .find.pmd.rho(if(sex == "male") env$RhoMales else env$RhoFemales, 
                          e0, nage, npred, interp.rho = interp.rho)
     mx0l <- list(mx0)
@@ -156,10 +156,10 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
                 minmx <- result$female$mx
             } else { # using Danan's regression
                 env <- new.env()
-                data("adjcoefPMD", envir = env)
-                minmx <- matrix(-1, nrow = nrow(env$adjcoefPMD), ncol = npred)
+                data("PMDadjcoef", envir = env)
+                minmx <- matrix(-1, nrow = nrow(env$PMDadjcoef), ncol = npred)
                 for(iage in 1:nrow(minmx)) {
-                    coef <- env$adjcoefPMD[iage, ]
+                    coef <- env$PMDadjcoef[iage, ]
                     minmx[iage,] <-  10^(coef[,"intercept"] + coef[,"lmxf"]*log10(result[[sex]]$mx[iage,]) + 
                                          coef[,"e0f"]*e0l$female + coef[,"e0f2"]*e0l$female^2 + coef[,"gap"]*(e0l$female - e0l$male))
                 }
@@ -181,10 +181,10 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
 #' @param \dots Additional arguments passed to the underlying function. For \code{copmd}, in addition to
 #'      \code{kranges} and \code{keep.lt}, it can be \code{sexratio.adjust} which is 
 #'      a logical controlling if a sex-ratio adjustment should be applied to prevent crossovers 
-#'      between male and female mx. In such a case it uses coefficients from the \code{\link{adjcoefPMD}} dataset. 
+#'      between male and female mx. In such a case it uses coefficients from the \code{\link{PMDadjcoef}} dataset. 
 #'      However, if the argument \code{adjust.with.mxf} is set to \code{TRUE} (in addition to \code{sexratio.adjust}),
 #'      the adjustment is done using the 
-#'      female mortality rates as a lower constraint for male mortality rates.
+#'      female mortality rates as the lower constraint for male mortality rates.
 #' @return Function \code{copmd} returns a list with one element for each sex 
 #'     (\code{male} and \code{female}) where each of them is a list as described above.
 #'     In addition if \code{keep.rho} is \code{TRUE}, element \code{rho.sex} 
@@ -208,7 +208,7 @@ copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ..
         stop("Mismatch in length of the mx0 vectors.")
     # derive rho as an average over male and female
     env <- new.env()
-    data("rhoPMD", envir = env)
+    data("PMDrho", envir = env)
     if(nage != nrow(env$RhoMales)) {
         warning("Mismatch in length of mx0 and the coefficient dataset. mx truncated to ",
                 nrow(env$RhoMales), " age categories.")
@@ -359,10 +359,10 @@ mltj <- function(e0m, e0f, ...) {
 #'     If it is a vector of size two, it is assumed these are weights for the first and the last
 #'     time period. Remaining weights will be interpolated. Note that \code{meth2} is weighted 
 #'     by \code{1 - weights}.
-#' @param apply.kannisto Logical. If \code{TRUE}, and any of the methods results in less than 
+#' @param apply.kannisto Logical. If \code{TRUE} and if any of the methods results in less than 
 #'     \code{min.age.groups} age categories, the coherent Kannisto method (\code{\link{cokannisto}}) 
 #'     is applied to extend the age groups into old ages.
-#' @param min.age.groups Minimum number of age groups. Triggers when Kannisto is applied, see above. 
+#' @param min.age.groups Minimum number of age groups. Triggers the application of Kannisto, see above. 
 #' @param meth1.args List of arguments passed to the function that corresponds to \code{meth1}. 
 #' @param meth2.args List of arguments passed to the function that corresponds to \code{meth2}. 
 #' @param kannisto.args List of arguments passed to the \code{\link{cokannisto}} function if Kannisto is applied. 

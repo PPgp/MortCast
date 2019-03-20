@@ -30,6 +30,8 @@
 #'    \item \code{\link{mortcast.blend}}: combining two different methods
 #' }
 #' 
+#' A life table can be constructed using the \code{\link{life.table}} function.
+#' 
 #' @references
 #' Li, N. and Lee, R. D. (2005). Coherent mortality forecasts for a group of populations: 
 #' An extension of the Lee-Carter method. Demography, 42, 575-594.

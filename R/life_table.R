@@ -1,6 +1,6 @@
 #' @title Life Table Function
 #' @description Function for obtaining life table quantities from mortality rates.
-#' @details Computes a life table corresponding to given mortality rates for 5-years age groups. 
+#' @details Computes a life table corresponding to given mortality rates for either 5- or 1-year age groups. 
 #' @param mx Vector of age-specific mortality rates nmx. If \code{abridged} is \code{TRUE} (default), 
 #'    the elements correspond to 1m0, 4m1, 5m5, 5m10, \dots. 
 #'    If \code{abridged} is \code{FALSE}, they correspond to 1m0, 1m1, 1m2, 1m3, \dots.
@@ -44,8 +44,8 @@ life.table <- function(mx, sex = c("male", "female", "both"), abridged = TRUE, r
         return(data.frame(age=resage, mx=mx[1:nresage], qx=nas, lx=nas, dx=nas, Lx=nas, 
                           sx=nas, Tx=nas, ex=nas, ax=nas))
     
-    LTC <- .C(LTfct, as.integer(sex), as.integer(nagem1), as.numeric(mx), 
-              Lx=Lx, lx=lx, qx=qx, ax=ax, Tx=Tx, sx=sx, dx=dx, PACKAGE = "MortCast")
+    LTC <- do.call(".C", list(LTfct, as.integer(sex), as.integer(nagem1), as.numeric(mx), 
+              Lx=Lx, lx=lx, qx=qx, ax=ax, Tx=Tx, sx=sx, dx=dx, PACKAGE = "MortCast"))
     LT <- data.frame(age=as.integer(ages), mx=mx, qx=LTC$qx, lx=LTC$lx, dx=LTC$dx, Lx=LTC$Lx,  sx=LTC$sx, Tx=LTC$Tx, 
                      ex=LTC$Tx/LTC$lx, ax=LTC$ax)
     LT$ax[nage] <- LT$ex[nage]

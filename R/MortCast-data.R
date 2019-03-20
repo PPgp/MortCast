@@ -38,16 +38,16 @@
 
 
 #' @title Pattern Mortality Decline Lookup Tables
-#' @name rhoPMD
-#' @aliases rhoPMD RhoFemales RhoMales
+#' @name PMDrho
+#' @aliases PMDrho RhoFemales RhoMales
 #' @docType data
 #' 
 #' @description Data object containing two tables with \eqn{\rho} coefficients for the 
 #' Pattern Mortality Decline method as implemented in the \code{\link{pmd}} function.
 #' 
-#' @usage data(rhoPMD)
+#' @usage data(PMDrho)
 #'
-#' @format Using \code{data(rhoPMD)} loads two objects into memory: \code{RhoFemales} and
+#' @format Using \code{data(PMDrho)} loads two objects into memory: \code{RhoFemales} and
 #'     \code{RhoMales}. They both are data frames with 22 rows corresponding to age groups, 
 #'     and 17 columns corresponding to different levels of life expectancy in 5-years intervals 
 #'     (from 50 to 135). The names of the columns reflect the middle of the respective interval.
@@ -63,7 +63,7 @@
 #' Technical Paper No. 6. New York: United Nations. \url{https://population.un.org/wpp/Publications/Files/WPP2017_TechnicalPaperNo6.pdf}
 #' 
 #' @examples 
-#' data(rhoPMD)
+#' data(PMDrho)
 #' head(RhoFemales)
 #' head(RhoMales)
 #' 
@@ -76,25 +76,26 @@
 #' 
 #' 
 #' @keywords datasets
-#' @rdname rhoPMD
+#' @rdname PMDrho
 NULL
 
 #' @title Coefficients for Sex Ratio Adjustments in the PMD Method
-#' @name adjcoefPMD
-#' @aliases adjcoefPMD
+#' @name PMDadjcoef
+#' @aliases PMDadjcoef
 #' @docType data
 #' 
 #' @description Data object containing a table of coefficients to be used to adjust the sex ratio in the 
 #' coherent Pattern Mortality Decline method as implemented in the \code{\link{copmd}} function. To invoke 
 #' the adjustment, argument \code{sexratio.adjust} should be set to \code{TRUE}.
 #' 
-#' @usage data(adjcoefPMD)
+#' @usage data(PMDadjcoef)
 #'
 #' @format Data frame containing columns \dQuote{age},  \dQuote{intercept}, \dQuote{lmxf}, \dQuote{e0f}, \dQuote{e0f2}, and \dQuote{gap}. 
 #'     Rows correspond to age groups. The values are estimates of the following  regression 
 #'     \deqn{\log_{10} mx = \beta_0 + \beta_1\log_{10} mx^F + \beta_2 e_0^F + \beta_3 (e_0^F)^2 + \beta_4(e_0^F - e_0^M)}
 #'     The order of the columns starting with intercept corresponds to the order of the coefficients in the above equation.
-#' 
+#'
+#' @source The coefficients were estimated and provided by Danan Gu, UN Population Division.
 #' 
 #' @seealso \code{\link{copmd}}
 #' 
@@ -103,11 +104,11 @@ NULL
 #' Technical Paper No. 6. New York: United Nations. \url{https://population.un.org/wpp/Publications/Files/WPP2017_TechnicalPaperNo6.pdf}
 #' 
 #' @examples 
-#' data(adjcoefPMD)
-#' adjcoefPMD
+#' data(PMDadjcoef)
+#' PMDadjcoef
 #' 
 #' 
 #' @keywords datasets
-"adjcoefPMD"
+"PMDadjcoef"
 
 

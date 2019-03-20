@@ -27,7 +27,7 @@ It does not have any effect if larger than the last age group.}
 Function for obtaining life table quantities from mortality rates.
 }
 \details{
-Computes a life table corresponding to given mortality rates for 5-years age groups.
+Computes a life table corresponding to given mortality rates for either 5- or 1-year age groups.
 }
 \examples{
 data(mxF, e0Fproj, package = "wpp2017")

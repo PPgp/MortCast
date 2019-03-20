@@ -1,3 +1,13 @@
+2.0-1 (03/19/2019)
+-----
+Added methods for projecting mortality (jointly with Patrick Gerland and Danan Gu):
+    - pmd() and its coherent version copmd() 
+    - mlt() and mltj()
+    - mortcast.blend() for combining two methods
+    
+Support for computing life tables, including one-year age groups life tables:
+    - life.table()
+
 1.2-1 (09/19/2018)
 -----
 Added a constraint to lx in life tables to be positive (thanks to Julia A. Palacios)

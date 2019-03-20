@@ -11,7 +11,7 @@ pmd(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
 copmd(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ...)
 }
 \arguments{
-\item{e0}{A time series of target life expectancy.}
+\item{e0}{A vector of target life expectancy, one element for each predicted time point.}
 
 \item{mx0}{A vector with starting age-specific mortality rates.}
 
@@ -19,7 +19,7 @@ copmd(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ...)
 
 \item{interp.rho}{Logical controlling if the \eqn{\rho} coefficients should be interpolated 
 (\code{TRUE}) or if the raw (binned) version should be used (\code{FALSE}), as stored in 
-the dataset \code{\link{rhoPMD}}.}
+the dataset \code{\link{PMDrho}}.}
 
 \item{kranges}{A vector of size two, giving the min and max of the \eqn{k} parameter which is 
 estimated to match the target \code{e0} using the bisection method.}
@@ -40,10 +40,10 @@ resulting object.}
 \item{\dots}{Additional arguments passed to the underlying function. For \code{copmd}, in addition to
 \code{kranges} and \code{keep.lt}, it can be \code{sexratio.adjust} which is 
 a logical controlling if a sex-ratio adjustment should be applied to prevent crossovers 
-between male and female mx. In such a case it uses coefficients from the \code{\link{adjcoefPMD}} dataset. 
+between male and female mx. In such a case it uses coefficients from the \code{\link{PMDadjcoef}} dataset. 
 However, if the argument \code{adjust.with.mxf} is set to \code{TRUE} (in addition to \code{sexratio.adjust}),
 the adjustment is done using the 
-female mortality rates as a lower constraint for male mortality rates.}
+female mortality rates as the lower constraint for male mortality rates.}
 }
 \value{
 Function \code{pmd} returns a list with the following elements: a matrix \code{mx}
@@ -58,7 +58,7 @@ Function \code{copmd} returns a list with one element for each sex
     gives the sex-dependent (i.e. not averaged) \eqn{\rho_x} coefficient.
 }
 \description{
-Predict age-specific mortality rates using the Pattern of mortality decline (PMD) method.
+Predict age-specific mortality rates using the Pattern of mortality decline (PMD) method (Andreev et al. 2013).
 }
 \details{
 These functions implements the PMD method introduced in Andreev et al. (2013). 
@@ -68,7 +68,7 @@ These functions implements the PMD method introduced in Andreev et al. (2013).
     
     Here, \eqn{\rho_x(t)} is the age-specific pattern of mortality decline between \eqn{t-1}
     and \eqn{t}. Such patterns for each sex and various levels of e0 
-    are stored in the dataset \code{\link{rhoPMD}}. The \code{pmd} function can be instructed 
+    are stored in the dataset \code{\link{PMDrho}}. The \code{pmd} function can be instructed 
     to interpolate between neighboring levels of e0 by setting the argument \code{interp.rho} 
     to \code{TRUE}. The \eqn{k} parameter is estimated to match the e0 level using the bisection 
     method.
@@ -102,5 +102,5 @@ Gu, D., Pelletier, F. and Sawyer, C. (2017). Projecting Age-sex-specific Mortali
 Technical Paper No. 6. New York: United Nations. \url{https://population.un.org/wpp/Publications/Files/WPP2017_TechnicalPaperNo6.pdf}
 }
 \seealso{
-\code{\link{mortcast}}, \code{\link{mortcast.blend}}, \code{\link{rhoPMD}}
+\code{\link{mortcast}}, \code{\link{mortcast.blend}}, \code{\link{PMDrho}}
 }

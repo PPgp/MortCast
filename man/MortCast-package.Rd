@@ -37,6 +37,8 @@ Other methods for forecasting mortality rates are available:
    \item \code{\link{mlt}}: model life tables
    \item \code{\link{mortcast.blend}}: combining two different methods
 }
+
+A life table can be constructed using the \code{\link{life.table}} function.
 }
 \examples{
 # This example applies Algorithm 2 in Sevcikova et al. (2016) 

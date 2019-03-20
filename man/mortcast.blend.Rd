@@ -27,11 +27,11 @@ If it is a vector of size two, it is assumed these are weights for the first and
 time period. Remaining weights will be interpolated. Note that \code{meth2} is weighted 
 by \code{1 - weights}.}
 
-\item{apply.kannisto}{Logical. If \code{TRUE}, and any of the methods results in less than 
+\item{apply.kannisto}{Logical. If \code{TRUE} and if any of the methods results in less than 
 \code{min.age.groups} age categories, the coherent Kannisto method (\code{\link{cokannisto}}) 
 is applied to extend the age groups into old ages.}
 
-\item{min.age.groups}{Minimum number of age groups. Triggers when Kannisto is applied, see above.}
+\item{min.age.groups}{Minimum number of age groups. Triggers the application of Kannisto, see above.}
 
 \item{meth1.args}{List of arguments passed to the function that corresponds to \code{meth1}.}
 
