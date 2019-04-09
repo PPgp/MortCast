@@ -326,7 +326,7 @@ mltj <- function(e0m, e0f, ...) {
     for(sex in names(e0)) {
         res[[sex]] <- list()
         if(!is.null(e0[[sex]]))
-            res[[sex]]$mx <- mlt(e0 = e0[[sex]], ...)
+            res[[sex]]$mx <- mlt(e0 = e0[[sex]], sex = sex, ...)
     }
     return(res)
 }
