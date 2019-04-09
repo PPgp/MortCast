@@ -444,3 +444,90 @@ void PMD(int *Npred, int *Sex, int *Nage, double *mx0, double *rho,
     }
 }
 
+double get_lquad_mortality(double a, double b, double c, double v, 
+                           double q1, double q2, double k) {
+    double mx;
+    
+    mx = exp(a + b*log(q1) + c*log(q1)**2);
+    if(constraint > 0 && mx < constraint) mx = constraint;
+    return mx;
+}
+
+void doLQuad(int sex, int nage, 
+             double *ax, double *bx, double *cx, double *vx, 
+             double eop, double q1, double q2, 
+             double kl, double ku, 
+             double *LLm, double *lm, double *Mx) {
+    double LTl[27], LTu[nage-1], mxm[nage], LTeo, k2;
+    int i, dim;
+    dim = nage-1;
+    
+    /* check if the eop lies outside of the bounds */
+    for (i=0; i < nage; ++i) {
+        mxm[i] = get_lquad_mortality(ax[i], bx[i], cx[i], vx[i], q1, q2, kl);
+    }
+    LifeTableC(sex, dim, mxm, LTl, lm);
+    
+    if(eop < sum(LTl, dim)) {
+        for (i=0; i < dim; ++i) LLm[i]=LTl[i];
+        for (i=0; i < nage; ++i) Mx[i] = mxm[i];
+        return;
+    }
+    for (i=0; i < nage; ++i) {
+        mxm[i] = get_constrained_mortality(ax[i], bx[i], ku, constraints[i]);
+    }
+    LifeTableC(sex, dim, mxm, LTu, lm);
+    
+    if(eop > sum(LTu, dim)) {
+        for (i=0; i < dim; ++i) LLm[i]=LTu[i]; 
+        for (i=0; i < nage; ++i) Mx[i] = mxm[i];
+        return;
+    }
+    /* Bi-section method */
+    k2 = 0.5 * (kl + ku);
+    for (i=0; i < nage; ++i) {
+        mxm[i] = get_constrained_mortality(ax[i], bx[i], k2, constraints[i]);
+    }
+    LifeTableC(sex, dim, mxm, LLm, lm);
+    LTeo = sum(LLm, dim);
+    while(fabs(LTeo - eop) > 0.01) {
+        if(LTeo < eop) kl = k2;
+        else ku = k2;
+        k2 = 0.5 * (kl + ku);
+        for (i=0; i < nage; ++i) {
+            mxm[i] = get_constrained_mortality(ax[i], bx[i], k2, constraints[i]);
+        }
+        LifeTableC(sex, dim, mxm, LLm, lm);
+        LTeo = sum(LLm, dim);
+    }
+    for (i=0; i < nage; ++i) Mx[i] = mxm[i];
+}
+
+
+/*****************************************************************************
+ * LogQuad model
+ * Produces a projection of age-specific mortality rates 
+ * using the log quadratic by Wilmoth (2012)
+ *****************************************************************************/
+void LQuad(int *Npred, int *Sex, int *Nage, double *Eop, 
+           double *ax, double *bx, double *cx, double *vx, 
+           double *Kl, double *Ku, 
+           double *LLm, double *Sr, double *lx, double *Mx) {
+    double eop, sx[*Nage-1], Lm[*Nage-1], mxm[*Nage], lm[*Nage];
+    double locbx[*Nage], locax[*Nage], loccx[*Nage], locvx[*Nage];
+    int i, sex, npred, pred, nage, nagem1;
+    
+    npred = *Npred;
+    sex=*Sex;
+    nage=*Nage;
+    nagem1 = nage-1;
+    
+    for (i=0; i < nage; ++i) {
+        locbx[i] = bx[i + pred*nage];
+        locax[i] = ax[i + pred*nage];
+        loccx[i] = cx[i + pred*nage];
+        locvx[i] = vx[i + pred*nage];
+    }
+    doLQuad(sex, nage, locax, locbx, loccx, locvx, eop, 
+            Kl[pred], Ku[pred], Lm, lm, mxm);
+}

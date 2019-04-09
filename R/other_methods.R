@@ -60,7 +60,7 @@
 #' @rdname pmdgroup
 
 pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
-                kranges = c(0.01, 25), keep.lt = FALSE, keep.rho = FALSE) {
+                kranges = c(0, 25), keep.lt = FALSE, keep.rho = FALSE) {
     sex <- match.arg(sex)
     if(length(dim(e0)) > 0) e0 <- drop(as.matrix(e0)) # if it's a data.frame, it would not drop dimension without as.matrix
     if(length(dim(mx0)) > 0) mx0 <- drop(as.matrix(mx0)) 
@@ -111,7 +111,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
     return(this.rho)
 }
 
-.do.copmd <- function(e0l, mx0l, rho, npred, kranges = c(0.01, 25), keep.lt = FALSE, 
+.do.copmd <- function(e0l, mx0l, rho, npred, kranges = c(0, 25), keep.lt = FALSE, 
                       sexratio.adjust = FALSE, adjust.with.mxf = FALSE) {
     # e0l and mx0l should be named lists of e0 and mx0 arrays with names being male and/or female. 
     # PMD is performed on all elements of the list using the same rho
@@ -326,9 +326,38 @@ mltj <- function(e0m, e0f, ...) {
     for(sex in names(e0)) {
         res[[sex]] <- list()
         if(!is.null(e0[[sex]]))
-            res[[sex]]$mx <- mlt(e0 = e0[[sex]], ...)
+            res[[sex]]$mx <- mlt(e0 = e0[[sex]], sex = sex, ...)
     }
     return(res)
+}
+
+
+logquad <- function(e0, sex = c("male", "female", "both"), my.coefs = NULL,
+                    kranges = c(0, 25)) {
+    sex <- match.arg(sex, choices = c("male", "female", "both", "total"))
+    if(sex == "total") sex <- "both"
+    sex <- list(male=1, female=2, both=3)[[sex]]
+    if(is.null(my.coefs)) {
+        data(LQcoefs)
+        coefs <- LQcoefs
+    } coefs <- my.coefs
+    colnames(coefs) <- tolower(colnames(coefs))
+    if(!all(c("sex", "age", "ax", "bx", "cx", "vx") %in% colnames(coefs)))
+        stop(paste("Missing columns in the coefficient dataset.\nRequired columns are",
+                   paste(c("sex", "age", "ax", "bx", "cx", "vx"), collapse = ", "), 
+                   "\nAvailable columns are", paste(colnames(coefs), collapse = ", ")))
+    sex.coefs <- coefs[tolower(coefs$sex) == sex,]
+    if(nrow(sex.coefs) == 0 & sex == "both") sex.coefs <- coefs[tolower(coefs$sex) == "total",]
+    nage <- nrow(sex.coefs)
+    npred <- length(e0)
+    Lx <- lx <- sr <- mx <- rep(0, nage)
+    resmx <- matrix(0, nrow=nage, ncol=npred)
+    LQres <- .C("LQuad", as.integer(npred), as.integer(sex), 
+                 as.integer(nage), as.numeric(e0), 
+                 as.numeric(sex.coefs$ax), as.numeric(sex.coefs$bx),
+                 as.numeric(sex.coefs$cx), as.numeric(sex.coefs$vx),
+                 Kl=as.numeric(kranges[1]), Ku=as.numeric(kranges[2]), 
+                 LLm = Lx, Sr=sr, lx=lx, Mx=as.numeric(resmx))
 }
 
 .apply.kannisto.if.needed <- function(mx, min.age.groups, ...) {
