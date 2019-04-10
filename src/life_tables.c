@@ -444,61 +444,70 @@ void PMD(int *Npred, int *Sex, int *Nage, double *mx0, double *rho,
     }
 }
 
-double get_lquad_mortality(double a, double b, double c, double v, 
-                           double q1, double q2, double k) {
-    double mx;
+/* 
+ * Functions for the LogQuad method by Wilmoth et al (2012)
+ * 
+ */
+void get_lquad_mortality(double *ax, double *bx, double *cx, double *vx, 
+                           double q5, double k, int sex, int nage, double *mx) {
+    double h, q1, q4;
+    int i;
+    double *a04; /* pointer to estimated ax[0] and ax[1] values */
+
+    h = log(q5);
     
-    mx = exp(a + b*log(q1) + c*log(q1)**2);
-    if(constraint > 0 && mx < constraint) mx = constraint;
-    return mx;
+    for (i=0; i < nage; ++i) {
+        mx[i] = exp(ax[i] + bx[i]*h + cx[i]*h*h + vx[i]*k);
+    }
+    /* Force 4q1 (and thus 4m1) to be consistent with 1q0 and 5q0 */
+    a04 = get_a05(mx[0], sex);
+    q1 = mx[0] / ( 1 + (1-a04[0])*mx[0] );
+    q4 = 1 - (1-q5)/(1-q1);
+    mx[1] = q4 / ( 4 - (4-a04[1])*q4 );
 }
 
 void doLQuad(int sex, int nage, 
              double *ax, double *bx, double *cx, double *vx, 
-             double eop, double q1, double q2, 
-             double kl, double ku, 
+             double eop, double k, 
+             double q5l, double q5u, 
              double *LLm, double *lm, double *Mx) {
-    double LTl[27], LTu[nage-1], mxm[nage], LTeo, k2;
+    double LTl[27], LTu[nage-1], mxm[nage], LTeo, q5t;
     int i, dim;
     dim = nage-1;
-    
+
     /* check if the eop lies outside of the bounds */
-    for (i=0; i < nage; ++i) {
-        mxm[i] = get_lquad_mortality(ax[i], bx[i], cx[i], vx[i], q1, q2, kl);
-    }
+    /* lower bound */
+    get_lquad_mortality(ax, bx, cx, vx, q5l, k, sex, nage, mxm);
     LifeTableC(sex, dim, mxm, LTl, lm);
-    
-    if(eop < sum(LTl, dim)) {
+    /*Rprintf("\nq5 = %lf, sum = %lf", q5l, sum(LTl, dim));*/
+    if(eop > sum(LTl, dim)) {
         for (i=0; i < dim; ++i) LLm[i]=LTl[i];
         for (i=0; i < nage; ++i) Mx[i] = mxm[i];
         return;
     }
-    for (i=0; i < nage; ++i) {
-        mxm[i] = get_constrained_mortality(ax[i], bx[i], ku, constraints[i]);
-    }
+    /* upper bound */
+    get_lquad_mortality(ax, bx, cx, vx, q5u, k, sex, nage, mxm);
     LifeTableC(sex, dim, mxm, LTu, lm);
-    
-    if(eop > sum(LTu, dim)) {
+    /*Rprintf("\nq5 = %lf, sum = %lf", q5u, sum(LTu, dim));*/
+    if(eop < sum(LTu, dim)) {
         for (i=0; i < dim; ++i) LLm[i]=LTu[i]; 
         for (i=0; i < nage; ++i) Mx[i] = mxm[i];
         return;
     }
+    
     /* Bi-section method */
-    k2 = 0.5 * (kl + ku);
-    for (i=0; i < nage; ++i) {
-        mxm[i] = get_constrained_mortality(ax[i], bx[i], k2, constraints[i]);
-    }
+    q5t = 0.5 * (q5l + q5u);
+    get_lquad_mortality(ax, bx, cx, vx, q5t, k, sex, nage, mxm);
     LifeTableC(sex, dim, mxm, LLm, lm);
     LTeo = sum(LLm, dim);
     while(fabs(LTeo - eop) > 0.01) {
-        if(LTeo < eop) kl = k2;
-        else ku = k2;
-        k2 = 0.5 * (kl + ku);
-        for (i=0; i < nage; ++i) {
-            mxm[i] = get_constrained_mortality(ax[i], bx[i], k2, constraints[i]);
-        }
+        if(LTeo > eop) q5l = q5t;
+        else q5u = q5t;
+        q5t = 0.5 * (q5l + q5u);
+        get_lquad_mortality(ax, bx, cx, vx, q5t, k, sex, nage, mxm);
         LifeTableC(sex, dim, mxm, LLm, lm);
         LTeo = sum(LLm, dim);
+        /*Rprintf("\nq5 = %lf, sum = %lf", q5u, LTeo);*/
     }
     for (i=0; i < nage; ++i) Mx[i] = mxm[i];
 }
@@ -511,10 +520,9 @@ void doLQuad(int sex, int nage,
  *****************************************************************************/
 void LQuad(int *Npred, int *Sex, int *Nage, double *Eop, 
            double *ax, double *bx, double *cx, double *vx, 
-           double *Kl, double *Ku, 
+           double *Q5l, double *Q5u, double *K,
            double *LLm, double *Sr, double *lx, double *Mx) {
     double eop, sx[*Nage-1], Lm[*Nage-1], mxm[*Nage], lm[*Nage];
-    double locbx[*Nage], locax[*Nage], loccx[*Nage], locvx[*Nage];
     int i, sex, npred, pred, nage, nagem1;
     
     npred = *Npred;
@@ -522,12 +530,21 @@ void LQuad(int *Npred, int *Sex, int *Nage, double *Eop,
     nage=*Nage;
     nagem1 = nage-1;
     
-    for (i=0; i < nage; ++i) {
-        locbx[i] = bx[i + pred*nage];
-        locax[i] = ax[i + pred*nage];
-        loccx[i] = cx[i + pred*nage];
-        locvx[i] = vx[i + pred*nage];
+    for (pred=0; pred < npred; ++pred) {
+        eop = Eop[pred];
+        doLQuad(sex, nage, ax, bx, cx, vx, eop, K[0],
+                Q5l[0], Q5u[0], Lm, lm, mxm);
+        get_sx(Lm, sx, nagem1, nagem1);
+        
+        for (i=0; i < nagem1; ++i) {
+            Sr[i + pred*(nagem1)] = sx[i];
+            Mx[i + pred*nage] = mxm[i];
+            lx[i + pred*nage] = lm[i];
+        }
+        Mx[nagem1 + pred*nage] = mxm[nagem1];
+        lx[nagem1 + pred*nage] = lm[nagem1];
+        for (i=0; i < nage-2; ++i) {
+            LLm[i + pred*(nagem1)] = Lm[i];
+        }
     }
-    doLQuad(sex, nage, locax, locbx, loccx, locvx, eop, 
-            Kl[pred], Ku[pred], Lm, lm, mxm);
 }

@@ -333,14 +333,14 @@ mltj <- function(e0m, e0f, ...) {
 
 
 logquad <- function(e0, sex = c("male", "female", "both"), my.coefs = NULL,
-                    kranges = c(0, 25)) {
+                    q5ranges = c(1e-4, 0.9), keep.lt = FALSE) {
     sex <- match.arg(sex, choices = c("male", "female", "both", "total"))
     if(sex == "total") sex <- "both"
-    sex <- list(male=1, female=2, both=3)[[sex]]
+    sex.code <- list(male=1, female=2, both=3)[[sex]]
     if(is.null(my.coefs)) {
-        data(LQcoefs)
-        coefs <- LQcoefs
-    } coefs <- my.coefs
+        data(LQcoef)
+        coefs <- LQcoef
+    } else coefs <- my.coefs
     colnames(coefs) <- tolower(colnames(coefs))
     if(!all(c("sex", "age", "ax", "bx", "cx", "vx") %in% colnames(coefs)))
         stop(paste("Missing columns in the coefficient dataset.\nRequired columns are",
@@ -348,16 +348,42 @@ logquad <- function(e0, sex = c("male", "female", "both"), my.coefs = NULL,
                    "\nAvailable columns are", paste(colnames(coefs), collapse = ", ")))
     sex.coefs <- coefs[tolower(coefs$sex) == sex,]
     if(nrow(sex.coefs) == 0 & sex == "both") sex.coefs <- coefs[tolower(coefs$sex) == "total",]
+    sex.coefs[is.na(sex.coefs)] <- 0 # replace NA with zero, otherwise it could not be passed to the C function
     nage <- nrow(sex.coefs)
     npred <- length(e0)
-    Lx <- lx <- sr <- mx <- rep(0, nage)
-    resmx <- matrix(0, nrow=nage, ncol=npred)
-    LQres <- .C("LQuad", as.integer(npred), as.integer(sex), 
+    ages <- c(0, 1, seq(5, length = nage - 2, by = 5))
+    k <- 0
+    # initialize results
+    zeromatsr <- matrix(0, nrow=nage-1, ncol=npred)
+    zeromatmx <- matrix(0, nrow=nage, ncol=npred)
+    ressex <- list(mx=zeromatmx, lx=zeromatmx, sr=zeromatsr, Lx=zeromatsr)
+    result <- list(female = ressex, male = ressex)
+    
+    
+    LQres <- .C("LQuad", as.integer(npred), as.integer(sex.code), 
                  as.integer(nage), as.numeric(e0), 
                  as.numeric(sex.coefs$ax), as.numeric(sex.coefs$bx),
                  as.numeric(sex.coefs$cx), as.numeric(sex.coefs$vx),
-                 Kl=as.numeric(kranges[1]), Ku=as.numeric(kranges[2]), 
-                 LLm = Lx, Sr=sr, lx=lx, Mx=as.numeric(resmx))
+                 Q5l=as.numeric(q5ranges[1]), Q5u=as.numeric(q5ranges[2]), 
+                 K = as.numeric(k), LLm = as.numeric(result[[sex]]$Lx), 
+                 Sr=as.numeric(result[[sex]]$sr), 
+                 lx=as.numeric(result[[sex]]$lx), Mx=as.numeric(result[[sex]]$mx))
+    
+    result[[sex]]$mx <- matrix(LQres$Mx, nrow=nage, 
+                               dimnames=list(ages, names(e0)))
+    if(keep.lt) {
+        result[[sex]]$sr <- matrix(LQres$Sr, nrow=nage-1,
+                                   dimnames=list(ages[-2], names(e0)))
+        result[[sex]]$Lx <- matrix(LQres$LLm, nrow=nage-1,
+                                   dimnames=list(ages[-2], names(e0)))
+        result[[sex]]$lx <- matrix(LQres$lx, nrow=nage, 
+                                   dimnames=list(ages, names(e0)))
+    } else {
+        result[[sex]]$sr <- NULL
+        result[[sex]]$Lx <- NULL
+        result[[sex]]$lx <- NULL
+    }
+    return(result[[sex]])
 }
 
 .apply.kannisto.if.needed <- function(mx, min.age.groups, ...) {

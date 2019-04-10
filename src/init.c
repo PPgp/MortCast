@@ -8,12 +8,14 @@
 /* .C calls */
 extern void LC(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
 extern void PMD(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
+extern void LQuad(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
 extern void LifeTable(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
 extern void LifeTableAbridged(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
 
 static const R_CMethodDef CEntries[] = {
     {"LC", (DL_FUNC) &LC, 15},
     {"PMD", (DL_FUNC) &PMD, 14},
+    {"LQuad", (DL_FUNC) &LQuad, 15},
     {"LifeTable", (DL_FUNC) &LifeTable, 10},
     {"LifeTableAbridged", (DL_FUNC) &LifeTableAbridged, 10},
     {NULL, NULL, 0}
