@@ -92,7 +92,7 @@ NULL
 #'
 #' @format Data frame containing columns \dQuote{age},  \dQuote{intercept}, \dQuote{lmxf}, \dQuote{e0f}, \dQuote{e0f2}, and \dQuote{gap}. 
 #'     Rows correspond to age groups. The values are estimates of the following  regression 
-#'     \deqn{\log_{10} mx = \beta_0 + \beta_1\log_{10} mx^F + \beta_2 e_0^F + \beta_3 (e_0^F)^2 + \beta_4(e_0^F - e_0^M)}
+#'     \deqn{\log_{10} mx^M = \beta_0 + \beta_1\log_{10} mx^F + \beta_2 e_0^F + \beta_3 (e_0^F)^2 + \beta_4(e_0^F - e_0^M)}
 #'     The order of the columns starting with intercept corresponds to the order of the coefficients in the above equation.
 #'
 #' @source The coefficients were estimated and provided by Danan Gu, UN Population Division.
@@ -111,4 +111,33 @@ NULL
 #' @keywords datasets
 "PMDadjcoef"
 
+#' @title Coefficients for the Log-Quadratic Mortality Model
+#' @name LQcoef
+#' @aliases LQcoef
+#' @docType data
+#' 
+#' @description Data object containing a table of coefficients to be used in the Log-Quadratic Model 
+#'     as implemented in the \code{\link{logquad}} function. 
+#' 
+#' @usage data(LQcoef)
+#'
+#' @format Data frame containing columns \dQuote{sex}, \dQuote{age}, \dQuote{ax}, \dQuote{bx}, \dQuote{cx}, \dQuote{vx}. 
+#'     Rows correspond to sex and age groups. 
+#'
+#' @source \url{http://www.demog.berkeley.edu/~jrw/LogQuad}
+#' 
+#' @seealso \code{\link{logquad}}
+#' 
+#' @references 
+#'      Wilmoth, J., Zureick, S., Canudas-Romo, V., Inoue, M., Sawyer, C. (2012). 
+#'      A Flexible Two-Dimensional Mortality Model for Use in Indirect Estimation. 
+#'      Population studies, 66(1), 1-28. doi:10.1080/00324728.2011.611411
+#' 
+#' @examples 
+#' data(LQcoef)
+#' head(LQcoef)
+#' 
+#' 
+#' @keywords datasets
+"LQcoef"
 

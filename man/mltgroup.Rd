@@ -25,8 +25,9 @@ mltj(e0m, e0f, ...)
 \item{\dots}{Additional arguments passed to the underlying function.}
 }
 \value{
-A matrix with the predicted mortality rates. Columns correpond 
-    to the values in the \code{e0} vector and rows correspond to age groups.
+Function \code{mlt} returns a matrix with the predicted mortality rates. Columns correpond 
+    to the values in the \code{e0} vector and rows correspond to age groups. 
+    Function \code{mltj} returns a list of such matrices, one for each sex.
 }
 \description{
 Predict age-specific mortality rates using Coale-Demeny and UN model life tables.
@@ -41,13 +42,13 @@ Given a level of life expectancy (e0), sex and a type of model life table, the f
 data(e0Fproj, package = "wpp2017")
 country <- "Uganda"
 # get target e0
-e0f <- as.numeric(subset(e0Fproj, name == country)[-(1:2)])
+e0f <- subset(e0Fproj, name == country)[-(1:2)]
 # project into future using life table Cole-Demeny North
 mx <- mlt(e0f, sex = "female", type = "CD_North")
 # plot first projection in black and the remaining ones in grey 
-plot(mx[,1], type="l", log="y", ylim=range(mx),
-    ylab="female mx", xlab="Age", main=country)
-for(i in 2:ncol(mx)) lines(mx[,i], col="grey")
+plot(mx[,1], type = "l", log = "y", ylim = range(mx),
+    ylab = "female mx", xlab = "Age", main = country)
+for(i in 2:ncol(mx)) lines(mx[,i], col = "grey")
 
 }
 \references{

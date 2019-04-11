@@ -1,6 +1,7 @@
 #' @title Life Table Function
 #' @description Function for obtaining life table quantities from mortality rates.
-#' @details Computes a life table corresponding to given mortality rates for either 5- or 1-year age groups. 
+#' @details Computes a life table corresponding to given mortality rates for either 5- or 1-year age groups. The implementation follows
+#'    Preston et al. (2001), including the choice of ax (see Table 3.3 on page 48). 
 #' @param mx Vector of age-specific mortality rates nmx. If \code{abridged} is \code{TRUE} (default), 
 #'    the elements correspond to 1m0, 4m1, 5m5, 5m10, \dots. 
 #'    If \code{abridged} is \code{FALSE}, they correspond to 1m0, 1m1, 1m2, 1m3, \dots.
@@ -11,6 +12,8 @@
 #' @param radix Base of the life table.
 #' @param open.age Open age group. If smaller than the last age group of \code{mx}, the life table is truncated. 
 #'    It does not have any effect if larger than the last age group.
+#' @references 
+#'    Preston, S.H., Heuveline, P., Guillot, M. (2001). Demography: Measuring and Modeling Population Processes. Oxford: Blackwell Publishers Ltd.
 #' @export
 #' @examples
 #' data(mxF, e0Fproj, package = "wpp2017")

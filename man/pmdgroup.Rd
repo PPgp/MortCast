@@ -6,7 +6,7 @@
 \title{Pattern of Mortality Decline Prediction}
 \usage{
 pmd(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
-  kranges = c(0.01, 25), keep.lt = FALSE, keep.rho = FALSE)
+  kranges = c(0, 25), keep.lt = FALSE, keep.rho = FALSE)
 
 copmd(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ...)
 }
@@ -85,20 +85,20 @@ country <- "Hungary"
 mxf <- subset(mxF, name == country)[,"2010-2015"]
 names(mxf) <- c(0,1, seq(5, 100, by=5))
 # get target e0
-e0f <- as.numeric(subset(e0Fproj, name == country)[-(1:2)])
+e0f <- subset(e0Fproj, name == country)[-(1:2)]
 # project into future
 pred <- pmd(e0f, mxf, sex = "female")
 # plot first projection in black and the remaining ones in grey 
-plot(pred$mx[,1], type="l", log="y", ylim=range(pred$mx),
-    ylab="female mx", xlab="Age", main=country)
-for(i in 2:ncol(pred$mx)) lines(pred$mx[,i], col="grey")
+plot(pred$mx[,1], type = "l", log = "y", ylim = range(pred$mx),
+    ylab = "female mx", xlab = "Age", main = country)
+for(i in 2:ncol(pred$mx)) lines(pred$mx[,i], col = "grey")
 
 }
 \references{
-Andreev, K. Gu, D., Gerland, P. (2013). Age Patterns of Mortality Improvement by Level of Life Expectancy at Birth with Applications to Mortality Projections. Paper presented at the Annual Meeting
+Andreev, K., Gu, D., Gerland, P. (2013). Age Patterns of Mortality Improvement by Level of Life Expectancy at Birth with Applications to Mortality Projections. Paper presented at the Annual Meeting
 of the Population Association of America, New Orleans, LA. \url{http://paa2013.princeton.edu/papers/132554}.
 
-Gu, D., Pelletier, F. and Sawyer, C. (2017). Projecting Age-sex-specific Mortality: A Comparison of the Modified Lee-Carter and Pattern of Mortality Decline Methods, UN Population Division, 
+Gu, D., Pelletier, F., Sawyer, C. (2017). Projecting Age-sex-specific Mortality: A Comparison of the Modified Lee-Carter and Pattern of Mortality Decline Methods, UN Population Division, 
 Technical Paper No. 6. New York: United Nations. \url{https://population.un.org/wpp/Publications/Files/WPP2017_TechnicalPaperNo6.pdf}
 }
 \seealso{

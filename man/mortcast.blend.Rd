@@ -14,8 +14,8 @@ mortcast.blend(e0m, e0f, meth1 = "lc", meth2 = "mlt", weights = c(1,
 \item{e0f}{A time series of future female life expectancy.}
 
 \item{meth1}{Character string giving the name of the first method to blend. It is one of 
-\dQuote{lc}, \dQuote{pmd} or \dQuote{mlt}, corresponding to Coherent Lee-Carter (function \code{\link{mortcast}}), 
- Pattern Mortality Decline (function \code{\link{copmd}}) and 
+\dQuote{lc}, \dQuote{pmd}, \dQuote{mlt} or \dQuote{logquad}, corresponding to Coherent Lee-Carter (function \code{\link{mortcast}}), 
+ Pattern Mortality Decline (function \code{\link{copmd}}), Log-Quadratic model (function \code{\link{logquadj}}), and 
  Model Life Tables (function \code{\link{mltj}}), respectively.}
 
 \item{meth2}{Character string giving the name of the second method to blend. 
@@ -48,7 +48,7 @@ List with elements \code{female} and \code{male}, each of which contains a matri
 }
 \description{
 Predict age-specific mortality rates using a blend of two different methods (Coherent Lee-Carter, 
-    Pattern Mortality Decline, or Model Life Tables). Weights can be applied to fine-tune the blending mix.
+    Coherent Pattern Mortality Decline, or Model Life Tables). Weights can be applied to fine-tune the blending mix.
 }
 \details{
 The function allows to combine two different methods using given weights.
@@ -64,8 +64,8 @@ mxf <- subset(mxF, name == country)[,4:16]
 rownames(mxm) <- rownames(mxf) <- c(0,1, seq(5, 100, by=5))
 lcest <- lileecarter.estimate(mxm, mxf)
 # project into future
-e0f <- as.numeric(subset(e0Fproj, name == country)[-(1:2)])
-e0m <- as.numeric(subset(e0Mproj, name == country)[-(1:2)])
+e0f <- subset(e0Fproj, name == country)[-(1:2)]
+e0m <- subset(e0Mproj, name == country)[-(1:2)]
 # Blend LC and MLT
 pred1 <- mortcast.blend(e0m, e0f, meth1 = "lc", meth2 = "mlt",
     meth1.args = list(lc.pars = lcest),
@@ -95,6 +95,6 @@ plotmx(pred2, age.group, "PMD-MLT (age 5-9)")
 
 }
 \seealso{
-\code{\link{mortcast}}, \code{\link{copmd}}, \code{\link{mltj}}, 
+\code{\link{mortcast}}, \code{\link{copmd}}, \code{\link{mltj}}, \code{\link{logquad}},
     \code{\link{cokannisto}}
 }

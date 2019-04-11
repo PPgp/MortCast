@@ -27,7 +27,8 @@ It does not have any effect if larger than the last age group.}
 Function for obtaining life table quantities from mortality rates.
 }
 \details{
-Computes a life table corresponding to given mortality rates for either 5- or 1-year age groups.
+Computes a life table corresponding to given mortality rates for either 5- or 1-year age groups. The implementation follows
+   Preston et al. (2001), including the choice of ax (see Table 3.3 on page 48).
 }
 \examples{
 data(mxF, e0Fproj, package = "wpp2017")
@@ -36,4 +37,7 @@ country <- "Mexico"
 mxf <- subset(mxF, name == country)[,"2010-2015"]
 life.table(mxf, sex = "female")
 
+}
+\references{
+Preston, S.H., Heuveline, P., Guillot, M. (2001). Demography: Measuring and Modeling Population Processes. Oxford: Blackwell Publishers Ltd.
 }
