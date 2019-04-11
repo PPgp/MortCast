@@ -4,7 +4,7 @@
 \alias{life.table}
 \title{Life Table Function}
 \usage{
-life.table(mx, sex = c("male", "female", "both"), abridged = TRUE,
+life.table(mx, sex = c("male", "female", "total"), abridged = TRUE,
   radix = 1, open.age = 130)
 }
 \arguments{

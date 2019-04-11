@@ -343,7 +343,7 @@ mltj <- function(e0m, e0f, ...) {
 #'      are taken from \url{http://www.demog.berkeley.edu/~jrw/LogQuad}.
 #'      
 #'      For the given inputs and values of life expectancy e0, the function finds values of \eqn{h} that 
-#'      best matches e0, using life tables and the bisection method. It returns the corresponding mortality schedule
+#'      best match e0, using life tables and the bisection method. It returns the corresponding mortality schedule
 #'      for each value of e0.
 #'      
 #'      Function \code{logquad} is for one sex, while \code{logquadj} can be used for both sexes.
@@ -365,7 +365,7 @@ mltj <- function(e0m, e0f, ...) {
 #' @references 
 #'      Wilmoth, J., Zureick, S., Canudas-Romo, V., Inoue, M., Sawyer, C. (2012). 
 #'      A Flexible Two-Dimensional Mortality Model for Use in Indirect Estimation. 
-#'      Population studies, 66(1), 1-28. doi:10.1080/00324728.2011.611411
+#'      Population studies, 66(1), 1-28. \doi{doi:10.1080/00324728.2011.611411}
 #' @seealso \code{\link{LQcoef}}, \code{\link{mortcast.blend}}, \code{\link{mortcast}}, \code{\link{pmd}}, \code{\link{mlt}}
 #' 
 #' @examples

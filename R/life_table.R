@@ -22,11 +22,11 @@
 #' mxf <- subset(mxF, name == country)[,"2010-2015"]
 #' life.table(mxf, sex = "female")
 #' 
-life.table <- function(mx, sex = c("male", "female", "both"), abridged = TRUE, radix = 1, open.age = 130){
+life.table <- function(mx, sex = c("male", "female", "total"), abridged = TRUE, radix = 1, open.age = 130){
     # The first two elements of mx must correspond to 0-1 and 1-4. 
     # If include01 is FALSE, the first two age groups of the results are collapsed to 0-5
     sex <- match.arg(sex)
-    sex <- list(male=1, female=2, both=3)[[sex]]
+    sex <- list(male=1, female=2, total=3)[[sex]]
     if(abridged) {
         ages <- c(0, 1, seq(5, length = length(mx)-2, by = 5))
         LTfct <- "LifeTableAbridged"

@@ -35,6 +35,7 @@ Other methods for forecasting mortality rates are available:
 \itemize{
    \item \code{\link{pmd}}: pattern of mortality decline
    \item \code{\link{mlt}}: model life tables
+   \item \code{\link{logquad}}: log-quadratic mortality model 
    \item \code{\link{mortcast.blend}}: combining two different methods
 }
 

@@ -1,3 +1,14 @@
+2.1-0 (04/11/2019)
+-----
+New method for projecting mortality:
+    - logquad and logquadj (implements Log-Quadratic Model of Wilmoth et al. 2012)
+    
+Bug fix in mltj (thanks to Danan Gu)
+
+Improvements in the documentation (thanks to Danan Gu and Anupreet Porwal)
+
+In the life.table() function, sex option changed from "both" to "total".
+    
 2.0-1 (03/19/2019)
 -----
 Added methods for projecting mortality (jointly with Patrick Gerland and Danan Gu):

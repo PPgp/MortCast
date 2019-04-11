@@ -131,7 +131,7 @@ NULL
 #' @references 
 #'      Wilmoth, J., Zureick, S., Canudas-Romo, V., Inoue, M., Sawyer, C. (2012). 
 #'      A Flexible Two-Dimensional Mortality Model for Use in Indirect Estimation. 
-#'      Population studies, 66(1), 1-28. doi:10.1080/00324728.2011.611411
+#'      Population studies, 66(1), 1-28. \doi{doi:10.1080/00324728.2011.611411}
 #' 
 #' @examples 
 #' data(LQcoef)

@@ -165,7 +165,7 @@ cokannisto <- function(mxM, mxF,
 
 #' @title Kannisto Estimation
 #' @description Estimate the Kannisto parameters (Thatcher et al. 1998).
-#' @details Given the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{mlogit(mx) = log(c) + dx},
+#' @details Given the Kannisto equation \eqn{logit(m_x) = \log(c) + dx}{logit(mx) = log(c) + dx},
 #'     the function estimates the \eqn{c} and \eqn{d} parameters using 
 #'     values of \code{ages} as the covariate \eqn{x}.
 #' @param mx A vector of mortality rates.
@@ -256,7 +256,7 @@ cokannisto.estimate <- function(mxM, mxF, ages, fitted = TRUE){
 #' @description Given estimated Kannisto parameters (coherent or original), 
 #'     it predicts mortality rates for given ages.
 #' @details Given parameters \eqn{c} and \eqn{d} in \code{pars}, 
-#'     the function uses the Kannisto equation \eqn{mlogit(m_x) = \log(c) + dx}{mlogit(mx) = log(c) + dx},
+#'     the function uses the Kannisto equation \eqn{logit(m_x) = \log(c) + dx}{logit(mx) = log(c) + dx},
 #'     to predict mortality rates for age groups \eqn{x} given by \code{ages}.
 #' @param pars A named vector with Kanisto coefficients \eqn{c} and \eqn{d} 
 #'     (e.g. result of \code{\link{kannisto.estimate}} or \code{\link{cokannisto.estimate}}).
