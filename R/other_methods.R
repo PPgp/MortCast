@@ -68,9 +68,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
     npred <- length(e0)
     nage <- length(mx0)
     # initialize results
-    env <- new.env()
-    data("PMDrho", envir = env)
-    rho <- .find.pmd.rho(if(sex == "male") env$RhoMales else env$RhoFemales, 
+    rho <- .find.pmd.rho(if(sex == "male") MortCast::RhoMales else MortCast::RhoFemales, 
                          e0, nage, npred, interp.rho = interp.rho)
     mx0l <- list(mx0)
     e0l <- list(e0)
@@ -155,11 +153,9 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
             if(adjust.with.mxf) { # using female mx
                 minmx <- result$female$mx
             } else { # using Danan's regression
-                env <- new.env()
-                data("PMDadjcoef", envir = env)
-                minmx <- matrix(-1, nrow = nrow(env$PMDadjcoef), ncol = npred)
+                minmx <- matrix(-1, nrow = nrow(MortCast::PMDadjcoef), ncol = npred)
                 for(iage in 1:nrow(minmx)) {
-                    coef <- env$PMDadjcoef[iage, ]
+                    coef <- MortCast::PMDadjcoef[iage, ]
                     minmx[iage,] <-  10^(coef[,"intercept"] + coef[,"lmxf"]*log10(result[[sex]]$mx[iage,]) + 
                                          coef[,"e0f"]*e0l$female + coef[,"e0f2"]*e0l$female^2 + coef[,"gap"]*(e0l$female - e0l$male))
                 }
@@ -207,16 +203,14 @@ copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ..
     if(length(mx0$female) != nage)
         stop("Mismatch in length of the mx0 vectors.")
     # derive rho as an average over male and female
-    env <- new.env()
-    data("PMDrho", envir = env)
-    if(nage != nrow(env$RhoMales)) {
+    if(nage != nrow(MortCast::RhoMales)) {
         warning("Mismatch in length of mx0 and the coefficient dataset. mx truncated to ",
-                nrow(env$RhoMales), " age categories.")
-        nage <- nrow(env$RhoMales)
+                nrow(MortCast::RhoMales), " age categories.")
+        nage <- nrow(MortCast::RhoMales)
         for(sex in names(e0)) mx0[[sex]] <- mx0[[sex]][1:nage]
     }
-    rho.male <- .find.pmd.rho(env$RhoMales, e0$male, nage, npred, interp.rho = interp.rho)
-    rho.female <- .find.pmd.rho(env$RhoFemales, e0$female, nage, npred, interp.rho = interp.rho)
+    rho.male <- .find.pmd.rho(MortCast::RhoMales, e0$male, nage, npred, interp.rho = interp.rho)
+    rho.female <- .find.pmd.rho(MortCast::RhoFemales, e0$female, nage, npred, interp.rho = interp.rho)
     rho <- (rho.male + rho.female)/2
     res <- .do.copmd(e0, mx0, rho = rho, npred = npred, ...)
 
@@ -270,15 +264,14 @@ mlt <- function(e0, sex = c("male", "female"), type = "CD_West") {
     sex <- match.arg(sex)
     sexcode <- c(female=2, male=1)[sex]
     if(length(dim(e0)) > 0) e0 <- drop(as.matrix(e0)) # if it's a data.frame, it would not drop dimension without as.matrix
-    env <- new.env()
-    data("MLTlookup", envir = env)
+    lookup <- MortCast::MLTlookup
     conv.type <- gsub(" |_", "", type)
-    conv.mlttypes <- gsub(" |_", "", env$MLTlookup$type)
+    conv.mlttypes <- gsub(" |_", "", lookup$type)
     if(! conv.type %in% conv.mlttypes) {
-        stop("Wrong MLT type. Available types:\n", paste(unique(env$MLTlookup$type), collapse = ", "))
+        stop("Wrong MLT type. Available types:\n", paste(unique(lookup$type), collapse = ", "))
     }
-    mlt <- env$MLTlookup[conv.mlttypes == conv.type & 
-                             env$MLTlookup$sex == sexcode, c("age", "e0", "mx")]
+    mlt <- lookup[conv.mlttypes == conv.type & 
+                             lookup$sex == sexcode, c("age", "e0", "mx")]
 
     mltw <- reshape(mlt, direction = "wide", timevar = "e0", idvar = "age", sep = "_")
     mlt.mat <- mltw[, -1]
@@ -286,11 +279,6 @@ mlt <- function(e0, sex = c("male", "female"), type = "CD_West") {
     rownames(mlt.mat) <- mltw[, 1]
     npred <- length(e0)
     nage <- nrow(mlt.mat)
-
-    # initialize results
-    zeromatsr <- matrix(0, nrow=nage-1, ncol=npred)
-    zeromatmx <- matrix(0, nrow=nage, ncol=npred)
-    res <- list(mx=zeromatmx, lx=zeromatmx, sr=zeromatsr, Lx=zeromatsr)
 
     mltcols <- colnames(mlt.mat)
     mlt.mids <- as.numeric(mltcols) # mid points
@@ -388,9 +376,7 @@ logquad <- function(e0, sex = c("male", "female", "total"), my.coefs = NULL,
     sex <- match.arg(sex)
     sex.code <- list(male=1, female=2, total=3)[[sex]]
     if(is.null(my.coefs)) {
-        env <- new.env()
-        data("LQcoef", envir = env)
-        coefs <- env$LQcoef
+        coefs <- MortCast::LQcoef
     } else coefs <- my.coefs
     colnames(coefs) <- tolower(colnames(coefs))
     if(!all(c("sex", "age", "ax", "bx", "cx", "vx") %in% colnames(coefs)))
