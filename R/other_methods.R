@@ -110,7 +110,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
 }
 
 .do.copmd <- function(e0l, mx0l, rho, npred, kranges = c(0, 25), keep.lt = FALSE, 
-                      sexratio.adjust = FALSE, adjust.with.mxf = FALSE) {
+                      sexratio.adjust = FALSE, adjust.to.sexratio = NULL, adjust.with.mxf = FALSE) {
     # e0l and mx0l should be named lists of e0 and mx0 arrays with names being male and/or female. 
     # PMD is performed on all elements of the list using the same rho
     sexes <- c("female", "male")
@@ -150,14 +150,28 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
         }
         if(sex == "female" && sexratio.adjust && "male" %in% names(mx0l)) { # both sexes must be present if applying constraint
             # compute minimum male mx
-            if(adjust.with.mxf) { # using female mx
+            if(!is.null(adjust.to.sexratio)) { # specific sex-ratios are given
                 minmx <- result$female$mx
-            } else { # using Danan's regression
-                minmx <- matrix(-1, nrow = nrow(MortCast::PMDadjcoef), ncol = npred)
-                for(iage in 1:nrow(minmx)) {
-                    coef <- MortCast::PMDadjcoef[iage, ]
-                    minmx[iage,] <-  10^(coef[,"intercept"] + coef[,"lmxf"]*log10(result[[sex]]$mx[iage,]) + 
+                minmx[] <- -1
+                if(is.null(names(adjust.to.sexratio))) {
+                    lsr <- min(length(adjust.to.sexratio), nage)
+                    names(adjust.to.sexratio)[1:lsr] <- ages[1:lsr]
+                }
+                notfoundage <- names(adjust.to.sexratio)[! names(adjust.to.sexratio) %in% rownames(result$female$mx)]
+                if(length(notfoundage) > 0)
+                    warning("Ages for adjustment not found in female mx - ignored:", paste(notfoundage, collapse = ", "))
+                for(age in setdiff(names(adjust.to.sexratio), notfoundage)) 
+                    minmx[age,] <- result$female$mx[age,]*adjust.to.sexratio[age]
+            } else {
+                if(adjust.with.mxf) { # using female mx
+                    minmx <- result$female$mx
+                } else { # using Danan's regression
+                    minmx <- matrix(-1, nrow = nrow(MortCast::PMDadjcoef), ncol = npred)
+                    for(iage in 1:nrow(minmx)) {
+                        coef <- MortCast::PMDadjcoef[iage, ]
+                        minmx[iage,] <-  10^(coef[,"intercept"] + coef[,"lmxf"]*log10(result[[sex]]$mx[iage,]) + 
                                          coef[,"e0f"]*e0l$female + coef[,"e0f2"]*e0l$female^2 + coef[,"gap"]*(e0l$female - e0l$male))
+                    }
                 }
             }
             minmx[,e0l$male > e0l$female] <- -1 # apply only if e0F >= e0M
@@ -180,7 +194,9 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
 #'      between male and female mx. In such a case it uses coefficients from the \code{\link{PMDadjcoef}} dataset. 
 #'      However, if the argument \code{adjust.with.mxf} is set to \code{TRUE} (in addition to \code{sexratio.adjust}),
 #'      the adjustment is done using the 
-#'      female mortality rates as the lower constraint for male mortality rates.
+#'      female mortality rates as the lower constraint for male mortality rates. 
+#'      In addition, specific sex-ratio values can be supplied via the argument \code{adjust.to.sexratio},
+#'      which is a named vector where names correspond to the ages that should be adjusted. 
 #' @return Function \code{copmd} returns a list with one element for each sex 
 #'     (\code{male} and \code{female}) where each of them is a list as described above.
 #'     In addition if \code{keep.rho} is \code{TRUE}, element \code{rho.sex} 
