@@ -395,8 +395,9 @@ void LC(int *Npred, int *Sex, int *Nage, double *ax, double *bx,
  *****************************************************************************/
 void PMD(int *Npred, int *Sex, int *Nage, double *mx0, double *rho, 
         double *Eop, double *Kl, double *Ku, double *Constr, int *Nconstr,
+        int *ConstrIfNeeded, double *FMx, double *SRini,
         double *LLm, double *Sr, double *lx, double *Mx) {
-    double eop, sx[*Nage-1], Lm[*Nage-1], mxm[*Nage], lm[*Nage], locrho[*Nage], locmx[*Nage], constr[*Nage];
+    double eop, sx[*Nage-1], Lm[*Nage-1], mxm[*Nage], fmx[*Nage], lm[*Nage], locrho[*Nage], locmx[*Nage], constr[*Nage], sr0[*Nage], sr1[*Nage];
     int i, sex, npred, pred, nage, nagem1, nconstr;
     
     npred = *Npred;
@@ -408,6 +409,12 @@ void PMD(int *Npred, int *Sex, int *Nage, double *mx0, double *rho,
     for (i=0; i < nage; ++i) {
         locmx[i] = log(mx0[i]);
     }
+    if(*ConstrIfNeeded > 0){
+        for (i=0; i < nage; ++i) {
+            sr0[i] = 0;
+            sr1[i] = SRini[i];
+        }
+    }
     for (pred=0; pred < npred; ++pred) {
         eop = Eop[pred];
         for (i=0; i < nage; ++i) {
@@ -418,11 +425,31 @@ void PMD(int *Npred, int *Sex, int *Nage, double *mx0, double *rho,
             for(i=0; i < nconstr; ++i) {
                 constr[i] = Constr[i + pred*nconstr];
             }
+        } else {
+            if(*ConstrIfNeeded > 0) {
+                for (i=0; i < nage; ++i) 
+                    fmx[i] = FMx[i + pred*nage];
+                if(pred > 0) {
+                    for (i=0; i < nage; ++i) {
+                        if(sr1[i] < 1 && sr0[i] >= 1)
+                            constr[i] = sr1[i] * fmx[i];
+                    }
+                }
+                /*Rprintf("\nconstr: sex %i period %i: ", sex, pred);
+                for (i=0; i < nage; ++i) 
+                    Rprintf("%lf, ", constr[i]);
+                Rprintf("\nsr0: ");
+                for (i=0; i < nage; ++i) 
+                    Rprintf("%lf, ", sr0[i]);
+                Rprintf("\nsr1: ");
+                for (i=0; i < nage; ++i) 
+                    Rprintf("%lf, ", sr1[i]);
+                Rprintf("\nfmx: ");
+                for (i=0; i < nage; ++i) 
+                    Rprintf("%lf, ", fmx[i]);*/
+            }
         }
 
-        /*Rprintf("\nconstr: sex %i period %i: ", sex, pred);
-        for (i=0; i < nage; ++i) 
-            Rprintf("%lf, ", i+1, constr[i]);*/
         
         /*Rprintf("\n%i: eop=%lf", pred, eop);*/
         LCEoKtC(sex, nage, locmx, locrho, eop, Kl[0], Ku[0], constr, Lm, lm, mxm);		
@@ -440,6 +467,12 @@ void PMD(int *Npred, int *Sex, int *Nage, double *mx0, double *rho,
         locmx[nagem1] = log(mxm[nagem1]);
         for (i=0; i < nage-2; ++i) {
             LLm[i + pred*(nagem1)] = Lm[i];
+        }
+        if(*ConstrIfNeeded > 0){
+            for (i=0; i < nage; ++i) {
+                sr0[i] = sr1[i];
+                sr1[i] = mxm[i]/fmx[i]; /* current sex ratio */
+            }
         }
     }
 }

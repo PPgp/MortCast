@@ -110,7 +110,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
 }
 
 .do.copmd <- function(e0l, mx0l, rho, npred, kranges = c(0, 25), keep.lt = FALSE, 
-                      sexratio.adjust = FALSE, adjust.to.sexratio = NULL, adjust.with.mxf = FALSE) {
+                      sexratio.adjust = FALSE, adjust.sr.if.needed = FALSE, adjust.with.mxf = FALSE) {
     # e0l and mx0l should be named lists of e0 and mx0 arrays with names being male and/or female. 
     # PMD is performed on all elements of the list using the same rho
     sexes <- c("female", "male")
@@ -123,16 +123,19 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
     zeromatmx <- matrix(0, nrow=nage, ncol=npred)
     ressex <- list(mx=zeromatmx, lx=zeromatmx, sr=zeromatsr, Lx=zeromatsr)
     result <- list(female = ressex, male = ressex)
+    sex.ratio.ini <- rep(0, nage)
     constraint <- -1
     nconstr <- 0
     # iterate over sexes - rho stays the same
     for(sex in sexes) { # important that female is processed first because of a possible sex constraint
         if(!sex %in% names(mx0l)) next
+        #if(sex == "male") stop("")
         PMDres <- .C("PMD", as.integer(npred), as.integer(c(female=2, male=1)[sex]), 
                      as.integer(nage),
                  as.numeric(mx0l[[sex]]), as.numeric(rho), as.numeric(e0l[[sex]]), 
                  Kl=as.numeric(kranges[1]), Ku=as.numeric(kranges[2]), 
-                 Constr = constraint, Nconstr = as.integer(nconstr),
+                 Constr = constraint, Nconstr = as.integer(nconstr), ConstrIfNeeded = as.integer(adjust.sr.if.needed == TRUE && sex == "male"),
+                 FMx = as.numeric(result$female$mx), SRini = sex.ratio.ini,
                  LLm = as.numeric(result[[sex]]$Lx), Sr=as.numeric(result[[sex]]$sr), 
                  lx=as.numeric(result[[sex]]$lx), Mx=as.numeric(result[[sex]]$mx))
         ages <- names(mx0l[[sex]])
@@ -148,20 +151,10 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
             result[[sex]]$Lx <- NULL
             result[[sex]]$lx <- NULL
         }
-        if(sex == "female" && sexratio.adjust && "male" %in% names(mx0l)) { # both sexes must be present if applying constraint
+        if(sex == "female" && (sexratio.adjust || adjust.sr.if.needed) && "male" %in% names(mx0l)) { # both sexes must be present if applying constraint
             # compute minimum male mx
-            if(!is.null(adjust.to.sexratio)) { # specific sex-ratios are given
-                minmx <- result$female$mx
-                minmx[] <- -1
-                if(is.null(names(adjust.to.sexratio))) {
-                    lsr <- min(length(adjust.to.sexratio), nage)
-                    names(adjust.to.sexratio)[1:lsr] <- ages[1:lsr]
-                }
-                notfoundage <- names(adjust.to.sexratio)[! names(adjust.to.sexratio) %in% rownames(result$female$mx)]
-                if(length(notfoundage) > 0)
-                    warning("Ages for adjustment not found in female mx - ignored:", paste(notfoundage, collapse = ", "))
-                for(age in setdiff(names(adjust.to.sexratio), notfoundage)) 
-                    minmx[age,] <- result$female$mx[age,]*adjust.to.sexratio[age]
+            if(adjust.sr.if.needed) { # 
+                sex.ratio.ini <- as.numeric(mx0l[["male"]]/mx0l[["female"]])
             } else {
                 if(adjust.with.mxf) { # using female mx
                     minmx <- result$female$mx
@@ -173,10 +166,10 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
                                          coef[,"e0f"]*e0l$female + coef[,"e0f2"]*e0l$female^2 + coef[,"gap"]*(e0l$female - e0l$male))
                     }
                 }
+                minmx[,e0l$male > e0l$female] <- -1 # apply only if e0F >= e0M
+                constraint <- as.numeric(minmx)
+                nconstr <- nrow(minmx)
             }
-            minmx[,e0l$male > e0l$female] <- -1 # apply only if e0F >= e0M
-            constraint <- as.numeric(minmx)
-            nconstr <- nrow(minmx)
         }
     }
     return(result)
@@ -195,8 +188,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
 #'      However, if the argument \code{adjust.with.mxf} is set to \code{TRUE} (in addition to \code{sexratio.adjust}),
 #'      the adjustment is done using the 
 #'      female mortality rates as the lower constraint for male mortality rates. 
-#'      In addition, specific sex-ratio values can be supplied via the argument \code{adjust.to.sexratio},
-#'      which is a named vector where names correspond to the ages that should be adjusted. 
+#'      In addition, time-invariant adjustment can be invoked using the argument \code{adjust.sr.if.needed}.
 #' @return Function \code{copmd} returns a list with one element for each sex 
 #'     (\code{male} and \code{female}) where each of them is a list as described above.
 #'     In addition if \code{keep.rho} is \code{TRUE}, element \code{rho.sex} 
