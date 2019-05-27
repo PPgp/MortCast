@@ -2,6 +2,8 @@
 #' @description Function for obtaining life table quantities from mortality rates.
 #' @details Computes a life table corresponding to given mortality rates for either 5- or 1-year age groups. The implementation follows
 #'    Preston et al. (2001), including the choice of ax (see Table 3.3 on page 48). 
+#'    For compatibility with computations done at the UN, we set ax for ages 5 and 10 
+#'    (in the abridged version) to 2.5.
 #' @param mx Vector of age-specific mortality rates nmx. If \code{abridged} is \code{TRUE} (default), 
 #'    the elements correspond to 1m0, 4m1, 5m5, 5m10, \dots. 
 #'    If \code{abridged} is \code{FALSE}, they correspond to 1m0, 1m1, 1m2, 1m3, \dots.

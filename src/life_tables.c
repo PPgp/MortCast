@@ -92,10 +92,15 @@ void doLifeTable(int sex, int nage, double *mx,
 	/* TB: corrected for age group 3 (5-9), tentativley set to 2.5 or n/2 */
 	/*  ax[2] = 2.5; */
 
-	k     = 0.1 * log(fmax(mx[4] / fmax(mx[2], DBL_MIN), DBL_MIN));
-	ax[2] = 2.5 - (25 / 12.0) * (mx[2] - k);
+	/*  test backward compatibility with Mortpak LIFETB for age 5-9 and 10-14 set to 2.5
+	 */
+	ax[2] = 2.5;
+	ax[3] = 2.5;
+	
+	/*k     = 0.1 * log(fmax(mx[4] / fmax(mx[2], DBL_MIN), DBL_MIN));
+	ax[2] = 2.5 - (25 / 12.0) * (mx[2] - k);*/
 
-	for(i = 3; i < nage1; ++i) {
+	for(i = 4; i < nage1; ++i) {
 		k     = 0.1 * log(fmax(mx[i+1] / fmax(mx[i-1], DBL_MIN), DBL_MIN));
 		ax[i] = 2.5 - (25 / 12.0) * (mx[i] - k);
 	}

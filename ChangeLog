@@ -1,3 +1,10 @@
+2.1-1 (05/27/2019)
+-----
+The abridged life table's ax values for ages 5 and 10 changed to 2.5 due to compatibility
+with the UN computations.
+
+Adaptive sex-ratio adjustments for copmd() (argument adjust.sr.if.needed).
+
 2.1-0 (04/11/2019)
 -----
 New method for projecting mortality:
@@ -8,6 +15,7 @@ Bug fix in mltj (thanks to Danan Gu)
 Improvements in the documentation (thanks to Danan Gu and Anupreet Porwal)
 
 In the life.table() function, sex option changed from "both" to "total".
+
     
 2.0-1 (03/19/2019)
 -----

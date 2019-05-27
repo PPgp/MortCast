@@ -44,7 +44,10 @@ between male and female mx. In such a case it uses coefficients from the \code{\
 However, if the argument \code{adjust.with.mxf} is set to \code{TRUE} (in addition to \code{sexratio.adjust}),
 the adjustment is done using the 
 female mortality rates as the lower constraint for male mortality rates. 
-In addition, time-invariant adjustment can be invoked using the argument \code{adjust.sr.if.needed}.}
+If the argument \code{adjust.sr.if.needed} is set to \code{TRUE}, a sex-ratio adjustment
+is performed dynamically, using the sex ratio in the previous time point. 
+In such a case, an adjustment in time t is applied only if there was a drop of sex ratio 
+below one at time t-1.}
 }
 \value{
 Function \code{pmd} returns a list with the following elements: a matrix \code{mx}
