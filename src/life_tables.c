@@ -105,7 +105,7 @@ void doLifeTable(int sex, int nage, double *mx,
 		ax[i] = 2.5 - (25 / 12.0) * (mx[i] - k);
 	}
 	/* penultimate ax calculated with k from previous age group */
-	ax[nage1] = 2.5 - (25 / 12.0) * (mx[nage1 - 1] - k);
+	ax[nage1] = 2.5 - (25 / 12.0) * (mx[nage1] - k);
 
 	/* correcting out-of (reasonable) bounds ax for older ages             */ 
 	/* 0.97=1-5*exp(-5)/(1-exp(-5)), for constant mu=1, Kannisto assumption*/
@@ -151,7 +151,7 @@ void doLifeTable1y(int sex, int nage, double *mx,
         ax[i] = 0.5 - (1 / 12.0) * (mx[i] - k);
     }
     /* penultimate ax calculated with k from previous age group */
-    ax[nage1] = 0.5 - (1 / 12.0) * (mx[nage1 - 1] - k);
+    ax[nage1] = 0.5 - (1 / 12.0) * (mx[nage1] - k);
     
     /* correcting out-of (reasonable) bounds ax for older ages             */ 
     /* 0.42=1-exp(-1)/(1-exp(-1)), for constant mu=1, Kannisto assumption*/
