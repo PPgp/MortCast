@@ -18,7 +18,7 @@
 #'    Preston, S.H., Heuveline, P., Guillot, M. (2001). Demography: Measuring and Modeling Population Processes. Oxford: Blackwell Publishers Ltd.
 #' @export
 #' @examples
-#' data(mxF, e0Fproj, package = "wpp2017")
+#' data(mxF, e0Fproj, package = "wpp2019")
 #' # get female mortality of Mexico for the current year
 #' country <- "Mexico"
 #' mxf <- subset(mxF, name == country)[,"2010-2015"]

@@ -126,12 +126,13 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
     sex.ratio.ini <- rep(0, nage)
     constraint <- -1
     nconstr <- 0
+    nx <- 5
     # iterate over sexes - rho stays the same
     for(sex in sexes) { # important that female is processed first because of a possible sex constraint
         if(!sex %in% names(mx0l)) next
         #if(sex == "male") stop("")
         PMDres <- .C("PMD", as.integer(npred), as.integer(c(female=2, male=1)[sex]), 
-                     as.integer(nage),
+                     as.integer(nage), as.integer(nx),
                  as.numeric(mx0l[[sex]]), as.numeric(rho), as.numeric(e0l[[sex]]), 
                  Kl=as.numeric(kranges[1]), Ku=as.numeric(kranges[2]), 
                  Constr = constraint, Nconstr = as.integer(nconstr), ConstrIfNeeded = as.integer(adjust.sr.if.needed == TRUE && sex == "male"),

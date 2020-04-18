@@ -28,8 +28,8 @@
 #' and Population Analysis, vol 39. Springer, Cham
 #' 
 #' @examples
-#' data(mxM, package = "wpp2017")
-#' mx <- subset(mxM, name == "Netherlands")[,4:16]
+#' data(mxM, package = "wpp2019")
+#' mx <- subset(mxM, name == "Netherlands")[,4:17]
 #' rownames(mx) <- c(0,1, seq(5, 100, by=5))
 #' lc.ax.avg <- leecarter.estimate(mx)
 #' lc.ax.last <- leecarter.estimate(mx, ax.index=ncol(mx))
@@ -52,7 +52,7 @@ leecarter.estimate <- function(mx, ax.index = NULL, ax.smooth = FALSE,
     }
     kt <- apply(lmx, 2, sum) - sum(ax)
     bx <- bx.estimate(lmx, ax, kt, postprocess = bx.postprocess)
-    return(list(ax = ax, bx = bx, kt = kt))
+    return(list(ax = ax, bx = bx, kt = kt, nx = nx))
 }
 
 bx.estimate <- function(lmx, ax, kt, postprocess=TRUE) {
@@ -113,20 +113,20 @@ bx.estimate <- function(lmx, ax, kt, postprocess=TRUE) {
 #' of age patterns of mortality decline for long-term projections. Demography, 50, 2037-2051.
 #' 
 #' @examples
-#' data(mxM, mxF, package = "wpp2017")
+#' data(mxM, mxF, package = "wpp2019")
 #' country <- "Germany"
-#' mxm <- subset(mxM, name == country)[,4:16]
-#' mxf <- subset(mxF, name == country)[,4:16]
+#' mxm <- subset(mxM, name == country)[,4:17]
+#' mxf <- subset(mxF, name == country)[,4:17]
 #' rownames(mxm) <- rownames(mxf) <- c(0,1, seq(5, 100, by=5))
 #' lc <- lileecarter.estimate(mxm, mxf)
 #' plot(lc$bx, type="l")
 #' lines(lc$ultimate.bx, lty=2)
 #' 
-lileecarter.estimate <- function(mxM, mxF, ...) {
-    lc.male <- leecarter.estimate(mxM, ...)
-    lc.female <- leecarter.estimate(mxF, ...)
+lileecarter.estimate <- function(mxM, mxF, nx = 5, ...) {
+    lc.male <- leecarter.estimate(mxM, nx = nx, ...)
+    lc.female <- leecarter.estimate(mxF, nx = nx, ...)
     bx <- (lc.male$bx + lc.female$bx)/2
-    return(list(bx = bx, ultimate.bx = ultimate.bx(bx),
+    return(list(bx = bx, ultimate.bx = ultimate.bx(bx), nx = nx, 
                 female=list(ax=lc.female$ax, bx=bx, kt=lc.female$kt, sex.bx = lc.female$bx),
                 male=list(ax=lc.male$ax, bx=bx, kt=lc.male$kt, sex.bx = lc.male$bx)
             ))
@@ -154,10 +154,10 @@ lileecarter.estimate <- function(mxM, mxF, ...) {
 #' of age patterns of mortality decline for long-term projections. Demography, 50, 2037-2051.
 #'
 #' @examples
-#' data(mxF, mxM, e0Fproj, e0Mproj, package = "wpp2017")
+#' data(mxF, mxM, e0Fproj, e0Mproj, package = "wpp2019")
 #' country <- "Japan"
-#' mxm <- subset(mxM, name == country)[,4:16]
-#' mxf <- subset(mxF, name == country)[,4:16]
+#' mxm <- subset(mxM, name == country)[,4:17]
+#' mxf <- subset(mxF, name == country)[,4:17]
 #' e0f <- as.numeric(subset(e0Fproj, name == country)[-(1:2)])
 #' e0m <- as.numeric(subset(e0Mproj, name == country)[-(1:2)])
 #' rownames(mxm) <- rownames(mxf) <- c(0,1, seq(5, 100, by=5))
@@ -208,8 +208,8 @@ ultimate.bx <- function(bx) {
     bx.lim <- rbind(apply(Bxt, 2, function(x) min(x[x>0])), 
                     apply(Bxt, 2, function(x) max(x[x>0])))
     for(sex in c("male", "female")) {
-        kranges[[sex]]$kl <- pmin((lmax - apply(ax[[sex]], 2, min))/bx.lim[2,], machine.max)
-        kranges[[sex]]$ku <- pmax((lmin - apply(ax[[sex]], 2, max))/bx.lim[1,], machine.min)
+        kranges[[sex]]$kl <- pmin((lmax - apply(ax[[sex]], 2, max))/bx.lim[2,], machine.max)
+        kranges[[sex]]$ku <- pmax((lmin - apply(ax[[sex]], 2, min))/bx.lim[1,], machine.min)
     }
     return(kranges)
 }
@@ -250,11 +250,11 @@ ultimate.bx <- function(bx) {
 #' and Population Analysis, vol 39. Springer, Cham
 #' 
 #' @examples
-#' data(mxM, mxF, e0Fproj, e0Mproj, package = "wpp2017")
+#' data(mxM, mxF, e0Fproj, e0Mproj, package = "wpp2019")
 #' country <- "Brazil"
 #' # estimate parameters from historical mortality data
-#' mxm <- subset(mxM, name == country)[,4:16]
-#' mxf <- subset(mxF, name == country)[,4:16]
+#' mxm <- subset(mxM, name == country)[,4:17]
+#' mxf <- subset(mxF, name == country)[,4:17]
 #' rownames(mxm) <- rownames(mxf) <- c(0,1, seq(5, 100, by=5))
 #' lc <- lileecarter.estimate(mxm, mxf)
 #' # project into future
@@ -297,7 +297,7 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
     
     #Get the projected kt from e0, and make projection of Mx
     for (sex in c("female", "male")) { # iterate over female and male (order matters because of the constrain)
-        LCres <- .C("LC", as.integer(npred), as.integer(c(female=2, male=1)[sex]), as.integer(nage),
+        LCres <- .C("LC", as.integer(npred), as.integer(c(female=2, male=1)[sex]), as.integer(nage), as.integer(lc.pars$nx),
                   as.numeric(lc.pars[[sex]]$axt), as.numeric(Bxt), as.numeric(e0[[sex]]), 
                   Kl=as.numeric(kranges[[sex]]$kl), Ku=as.numeric(kranges[[sex]]$ku), 
                   # 1 for constraining old ages only; 2 for constraining all ages
