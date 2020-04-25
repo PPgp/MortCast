@@ -4,8 +4,14 @@
 \alias{mortcast}
 \title{Coherent Rotated Lee-Carter Prediction}
 \usage{
-mortcast(e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
-  constrain.all.ages = FALSE)
+mortcast(
+  e0m,
+  e0f,
+  lc.pars,
+  rotate = TRUE,
+  keep.lt = FALSE,
+  constrain.all.ages = FALSE
+)
 }
 \arguments{
 \item{e0m}{A time series of future male life expectancy.}

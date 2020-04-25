@@ -4,9 +4,18 @@
 \alias{mortcast.blend}
 \title{Mortality Prediction by Method Blending}
 \usage{
-mortcast.blend(e0m, e0f, meth1 = "lc", meth2 = "mlt", weights = c(1,
-  0.5), apply.kannisto = TRUE, min.age.groups = 28,
-  meth1.args = NULL, meth2.args = NULL, kannisto.args = NULL)
+mortcast.blend(
+  e0m,
+  e0f,
+  meth1 = "lc",
+  meth2 = "mlt",
+  weights = c(1, 0.5),
+  apply.kannisto = TRUE,
+  min.age.groups = 28,
+  meth1.args = NULL,
+  meth2.args = NULL,
+  kannisto.args = NULL
+)
 }
 \arguments{
 \item{e0m}{A time series of future male life expectancy.}

@@ -7,7 +7,7 @@
 #' the resulting \eqn{a_x} should be smoothened over ages (see Sevcikova et al. 2016 for details).
 #' 
 #' @param mx A matrix of age-specific mortality rates where rows correspond to age groups
-#'     and columns correspond to time periods.
+#'     and columns correspond to time periods. Rownames define the starting ages of the age groups.
 #' @param ax.index A vector of column indices of \code{mx} to be used to estimate the \eqn{a_x} parameter.
 #'     By default all time periods are used.
 #' @param ax.smooth Logical allowing to smooth the \eqn{a_x} over ages.
@@ -28,8 +28,8 @@
 #' and Population Analysis, vol 39. Springer, Cham
 #' 
 #' @examples
-#' data(mxM, package = "wpp2019")
-#' mx <- subset(mxM, name == "Netherlands")[,4:17]
+#' data(mxM, package = "wpp2017")
+#' mx <- subset(mxM, name == "Netherlands")[,4:16]
 #' rownames(mx) <- c(0,1, seq(5, 100, by=5))
 #' lc.ax.avg <- leecarter.estimate(mx)
 #' lc.ax.last <- leecarter.estimate(mx, ax.index=ncol(mx))
@@ -97,8 +97,10 @@ bx.estimate <- function(lmx, ax, kt, postprocess=TRUE) {
 #'     The function in addition computes the ultimate \eqn{b^u_x} as defined in 
 #'     Li et al. (2013) based on the coherent \eqn{b_x}.
 #' @param mxM A matrix of male age-specific mortality rates where rows correspond to age groups
-#'     and columns correspond to time periods.
+#'     and columns correspond to time periods. For 5-year age groups, the first and second rows corresponds to 
+#'     0-1 and 1-5 age groups, respectively. Rownames define the starting ages of the respective groups.
 #' @param mxF A matrix of female mortality rates of the same shape as \code{mxM}.
+#' @param nx Size of age groups. Should be either 5 or 1.
 #' @param ... Additional arguments passed to \code{\link{leecarter.estimate}}.
 #' @return List containing elements \code{bx} (coherent \eqn{b_x} parameter), 
 #'     \code{ultimate.bx} (ultimate \eqn{b^u_x} parameter), and
@@ -113,10 +115,10 @@ bx.estimate <- function(lmx, ax, kt, postprocess=TRUE) {
 #' of age patterns of mortality decline for long-term projections. Demography, 50, 2037-2051.
 #' 
 #' @examples
-#' data(mxM, mxF, package = "wpp2019")
+#' data(mxM, mxF, package = "wpp2017")
 #' country <- "Germany"
-#' mxm <- subset(mxM, name == country)[,4:17]
-#' mxf <- subset(mxF, name == country)[,4:17]
+#' mxm <- subset(mxM, name == country)[,4:16]
+#' mxf <- subset(mxF, name == country)[,4:16]
 #' rownames(mxm) <- rownames(mxf) <- c(0,1, seq(5, 100, by=5))
 #' lc <- lileecarter.estimate(mxm, mxf)
 #' plot(lc$bx, type="l")
@@ -154,10 +156,10 @@ lileecarter.estimate <- function(mxM, mxF, nx = 5, ...) {
 #' of age patterns of mortality decline for long-term projections. Demography, 50, 2037-2051.
 #'
 #' @examples
-#' data(mxF, mxM, e0Fproj, e0Mproj, package = "wpp2019")
+#' data(mxF, mxM, e0Fproj, e0Mproj, package = "wpp2017")
 #' country <- "Japan"
-#' mxm <- subset(mxM, name == country)[,4:17]
-#' mxf <- subset(mxF, name == country)[,4:17]
+#' mxm <- subset(mxM, name == country)[,4:16]
+#' mxf <- subset(mxF, name == country)[,4:16]
 #' e0f <- as.numeric(subset(e0Fproj, name == country)[-(1:2)])
 #' e0m <- as.numeric(subset(e0Mproj, name == country)[-(1:2)])
 #' rownames(mxm) <- rownames(mxf) <- c(0,1, seq(5, 100, by=5))
@@ -250,11 +252,11 @@ ultimate.bx <- function(bx) {
 #' and Population Analysis, vol 39. Springer, Cham
 #' 
 #' @examples
-#' data(mxM, mxF, e0Fproj, e0Mproj, package = "wpp2019")
+#' data(mxM, mxF, e0Fproj, e0Mproj, package = "wpp2017")
 #' country <- "Brazil"
 #' # estimate parameters from historical mortality data
-#' mxm <- subset(mxM, name == country)[,4:17]
-#' mxf <- subset(mxF, name == country)[,4:17]
+#' mxm <- subset(mxM, name == country)[,4:16]
+#' mxf <- subset(mxF, name == country)[,4:16]
 #' rownames(mxm) <- rownames(mxf) <- c(0,1, seq(5, 100, by=5))
 #' lc <- lileecarter.estimate(mxm, mxf)
 #' # project into future
@@ -276,7 +278,14 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
     e0  <- list(female=e0f, male=e0m)
     npred <- length(e0f)
     nage <- length(lc.pars$female$ax)
-    zeromatsr <- matrix(0, nrow=nage-1, ncol=npred)
+    if(lc.pars$nx > 1) {
+        resnage <-  nage-1 # number of age groups of the resulting matrices 
+        age.groups <- names(lc.pars$bx)[-2] # group 0-1 collapsed into 0-5
+    } else {
+        resnage <-  nage # all ages
+        age.groups <- names(lc.pars$bx)
+    }
+    zeromatsr <- matrix(0, nrow=resnage, ncol=npred)
     zeromatmx <- matrix(0, nrow=nage, ncol=npred)
     ressex <- list(mx=zeromatmx, lx=zeromatmx, sr=zeromatsr, Lx=zeromatsr)
     result <- list(female = ressex, male = ressex)
@@ -294,7 +303,7 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
     
     # compute ranges for k(t)
     kranges <- .kranges(Bxt, lc.pars$male$axt, lc.pars$female$axt)
-    
+    #browser()
     #Get the projected kt from e0, and make projection of Mx
     for (sex in c("female", "male")) { # iterate over female and male (order matters because of the constrain)
         LCres <- .C("LC", as.integer(npred), as.integer(c(female=2, male=1)[sex]), as.integer(nage), as.integer(lc.pars$nx),
@@ -308,10 +317,10 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
         result[[sex]]$mx <- matrix(LCres$Mx, nrow=nage, 
                                    dimnames=list(names(lc.pars$bx), names(e0m)))
         if(keep.lt) {
-            result[[sex]]$sr <- matrix(LCres$Sr, nrow=nage-1,
-                                       dimnames=list(names(lc.pars$bx)[-2], names(e0m)))
-            result[[sex]]$Lx <- matrix(LCres$LLm, nrow=nage-1,
-                                       dimnames=list(names(lc.pars$bx)[-2], names(e0m)))
+            result[[sex]]$sr <- matrix(LCres$Sr, nrow=resnage,
+                                       dimnames=list(age.groups, names(e0m)))
+            result[[sex]]$Lx <- matrix(LCres$LLm, nrow=resnage,
+                                       dimnames=list(age.groups, names(e0m)))
             result[[sex]]$lx <- matrix(LCres$lx, nrow=nage, 
                                        dimnames=list(names(lc.pars$bx), names(e0m)))
         } else {

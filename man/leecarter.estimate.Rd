@@ -4,12 +4,17 @@
 \alias{leecarter.estimate}
 \title{Lee-Carter Estimation}
 \usage{
-leecarter.estimate(mx, ax.index = NULL, ax.smooth = FALSE,
-  bx.postprocess = TRUE, nx = 5)
+leecarter.estimate(
+  mx,
+  ax.index = NULL,
+  ax.smooth = FALSE,
+  bx.postprocess = TRUE,
+  nx = 5
+)
 }
 \arguments{
 \item{mx}{A matrix of age-specific mortality rates where rows correspond to age groups
-and columns correspond to time periods.}
+and columns correspond to time periods. Rownames define the starting ages of the age groups.}
 
 \item{ax.index}{A vector of column indices of \code{mx} to be used to estimate the \eqn{a_x} parameter.
 By default all time periods are used.}

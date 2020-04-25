@@ -4,8 +4,7 @@
 \alias{kannisto}
 \title{Kannisto Method}
 \usage{
-kannisto(mx, est.ages = seq(80, 95, by = 5), proj.ages = seq(100, 130,
-  by = 5))
+kannisto(mx, est.ages = seq(80, 95, by = 5), proj.ages = seq(100, 130, by = 5))
 }
 \arguments{
 \item{mx}{A vector or matrix of mortality rates. If it is a matrix,

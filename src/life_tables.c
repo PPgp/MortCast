@@ -138,18 +138,19 @@ void doLifeTable1y(int sex, int nage, double *mx,
                  double *Lx, double *lx, double *qx, double *ax) {
     
     int i;
-    double k;     /* correcting factor in Greville approximation */
+//    double k;     /* correcting factor in Greville approximation */
     double *tmpa; /* pointer to estimated ax[0] and ax[1] values */
     int nage1;
     nage1 = nage -1;
     tmpa = get_a05(mx[0], sex); 
     ax[0] = tmpa[0]; /* use only ax[0] */
-    for(i = 1; i < nage1; ++i) {
-        k = 0.5 * log(fmax(mx[i+1] / fmax(mx[i-1], DBL_MIN), DBL_MIN));
-        ax[i] = 0.5 - (1 / 12.0) * (mx[i] - k);
+    for(i = 1; i < nage; ++i) {
+        /* k = 0.5 * log(fmax(mx[i+1] / fmax(mx[i-1], DBL_MIN), DBL_MIN));*/
+        /*ax[i] = 0.5 - (1 / 12.0) * (mx[i] - k);*/
+        ax[i] = 0.5;
     }
     /* penultimate ax calculated with k from previous age group */
-    ax[nage1] = 0.5 - (1 / 12.0) * (mx[nage1] - k);
+    /*ax[nage1] = 0.5 - (1 / 12.0) * (mx[nage1] - k);*/
 
     /* correcting out-of (reasonable) bounds ax for older ages             */ 
     /* 0.42=1-exp(-1)/(1-exp(-1)), for constant mu=1, Kannisto assumption*/
@@ -188,19 +189,20 @@ void LTextraColumns(int nx, int nage, double *lx, double *Lx,
         Tx[i] = Tx[i+1] + Lx[i];
     }       
     /* sx */
-    /* first age group is survival from births to the second age group */
-    sx[0] = (Lx[0] + Lx[1]) / nx*lx[0];
-    
     if(nx > 1) {
-        /* second age group is survival age 0-5 to age 5 - 10 */
-        sx[1] = Lx[2] / (Lx[0] + Lx[1]);
+        sx[0] = Lx[0] / lx[0]; /* survival at births; assumes this is 0-1 age group */
+        sx[1] = (Lx[1]/4.0) / Lx[0]; /* survival from 0-1 to 1-5 age group */
+        sx[2] = Lx[2] / (Lx[0] + Lx[1]); /* survival to the 5-10 age group */
     } else {
-        sx[1] = Lx[2] / Lx[1];
+        sx[0] = Lx[0] / nx*lx[0];
+        sx[1] = Lx[1] / Lx[0];
+        sx[2] = Lx[2] / Lx[1];
     }
     /* middle age groups  */
-    for(i = 2; i < nage-1; ++i) {
-        sx[i] = Lx[i+1] / Lx[i];
+    for(i = 3; i < nage-1; ++i) {
+        sx[i] = Lx[i] / Lx[i-1];
     }
+
     /* last but one age group */
     sx[nage-1] = Lx[nage] / (Lx[nage-1]+Lx[nage]);
     sx[nage]= 0.0;
@@ -233,27 +235,15 @@ void LifeTable(int *sex, int *nage, double *mx,
  */
 void LifeTable1yC(int sex, int nage, double *mx,
                 double *Lx, double *lx) {
-    /*double Lx[nage+1], lx[nage+1];*/
     double qx[nage], ax[nage];
-    /*int i;*/
-
-    doLifeTable1y(sex, nage, mx, Lx, lx, qx, ax);
-
-    /* collapses first two age groups into 0-1 */
-    /*Lxx[0] = Lx[0] + Lx[1];
-    lxx[0] = lx[0];
-
-    for(i = 1; i < nage; ++i) {
-        Lxx[i] = Lx[i+1];
-        lxx[i] = lx[i+1];
-    }*/
+    doLifeTable1y(sex, nage-1, mx, Lx, lx, qx, ax);
 }
 
 
 /* Function returns collapsed Lx and lx columns of life table */
 /* function calls doLifeTable first, then collapsesLx and lx  */
 void LifeTableC(int sex, int nage, double *mx,
-                double *Lxx, double *lxx) {
+                double *Lxx, double *lx) {
   /* life table variables returned from doLifeTable */
   /* need to be declared with nage+1 elements       */
   /* Lx[nage+1]
@@ -265,17 +255,17 @@ void LifeTableC(int sex, int nage, double *mx,
    * with nage-1 elements outside 
    */
   
-  double Lx[nage+1], lx[nage+1], qx[nage+1], ax[nage+1];
+  double Lx[nage+1], qx[nage+1], ax[nage+1];
   int i;
   
   /* do life table called with nage as last index */
   doLifeTable(sex, nage, mx, Lx, lx, qx, ax);
   /* collapse 1L0 and 4L1 into 5L0 */
   Lxx[0] = Lx[0] + Lx[1];
-  lxx[0] = lx[0];
+  /*lxx[0] = lx[0];*/
   for(i = 1; i < nage; ++i) {
     Lxx[i] = Lx[i+1];
-    lxx[i] = lx[i+1];
+    /*lxx[i] = lx[i+1];*/
   }
 }
 
@@ -359,14 +349,15 @@ void get_sx(double *LLm, double *sx, int n, int Ldim, int nx) {
         if(LLm[i-1] == 0) sx[i] = exp(-nx);
         else sx[i] = LLm[i]/LLm[i-1];
     }
-    /* Last age group */
+    /* Last but one age group */
     sumLL = 0;
-    for(i=oei; i < Ldim; ++i) {
+    for(i=oei+1; i < Ldim+1; ++i) {
         sumLL += LLm[i];
     }
-    if((sumLL + LLm[oei-1]) == 0 ||  sumLL == 0) sx[oei] = exp(-nx);
-    else sx[oei] = sumLL/(sumLL+LLm[oei-1]);
+    if((sumLL + LLm[oei]) == 0 ||  sumLL == 0) sx[oei] = exp(-nx);
+    else sx[oei] = sumLL/(sumLL+LLm[oei]);
     if(sx[oei] > sx[oei-1]) sx[oei] = sx[oei-1];
+    sx[n] = 0.0;
 }
 
 
@@ -412,9 +403,9 @@ void LC(int *Npred, int *Sex, int *Nage, int *Nx, double *ax, double *bx,
 			locbx[i] = bx[i + pred*nage];
 			locax[i] = ax[i + pred*nage];
 		}
-
+        /*Rprintf("\npred = %i", pred);*/
 		LCEoKtC(sex, nage, nx, locax, locbx, eop, Kl[pred], Ku[pred], fmx, Lm, lm, mxm);		
-		get_sx(Lm, sx, nagem1, nagem1, nx);
+		get_sx(Lm, sx, nagem1-1, nagem1-1, nx);
 		
 		for (i=0; i < nagem1; ++i) {
 			Sr[i + pred*(nagem1)] = sx[i];
@@ -424,7 +415,7 @@ void LC(int *Npred, int *Sex, int *Nage, int *Nx, double *ax, double *bx,
 		}
 		Mx[nagem1 + pred*nage] = mxm[nagem1];
 		lx[nagem1 + pred*nage] = lm[nagem1];
-		for (i=0; i < nage-2; ++i) {
+		for (i=0; i < nagem1; ++i) {
 			LLm[i + pred*(nagem1)] = Lm[i];
 		}
 	}

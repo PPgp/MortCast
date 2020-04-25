@@ -4,8 +4,12 @@
 \alias{cokannisto}
 \title{Coherent Kannisto Method}
 \usage{
-cokannisto(mxM, mxF, est.ages = seq(80, 95, by = 5),
-  proj.ages = seq(100, 130, by = 5))
+cokannisto(
+  mxM,
+  mxF,
+  est.ages = seq(80, 95, by = 5),
+  proj.ages = seq(100, 130, by = 5)
+)
 }
 \arguments{
 \item{mxM}{A vector or matrix of male mortality rates. If it is a matrix,

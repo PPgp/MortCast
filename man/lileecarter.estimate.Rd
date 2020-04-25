@@ -4,13 +4,16 @@
 \alias{lileecarter.estimate}
 \title{Coherent Lee-Carter Estimation}
 \usage{
-lileecarter.estimate(mxM, mxF, ...)
+lileecarter.estimate(mxM, mxF, nx = 5, ...)
 }
 \arguments{
 \item{mxM}{A matrix of male age-specific mortality rates where rows correspond to age groups
-and columns correspond to time periods.}
+and columns correspond to time periods. For 5-year age groups, the first and second rows corresponds to 
+0-1 and 1-5 age groups, respectively. Rownames define the starting ages of the respective groups.}
 
 \item{mxF}{A matrix of female mortality rates of the same shape as \code{mxM}.}
+
+\item{nx}{Size of age groups. Should be either 5 or 1.}
 
 \item{...}{Additional arguments passed to \code{\link{leecarter.estimate}}.}
 }

@@ -5,8 +5,14 @@
 \alias{logquadj}
 \title{Log-Quadratic Mortality Model}
 \usage{
-logquad(e0, sex = c("male", "female", "total"), my.coefs = NULL,
-  q5ranges = c(1e-04, 0.9), k = 0, keep.lt = FALSE)
+logquad(
+  e0,
+  sex = c("male", "female", "total"),
+  my.coefs = NULL,
+  q5ranges = c(1e-04, 0.9),
+  k = 0,
+  keep.lt = FALSE
+)
 
 logquadj(e0m, e0f, ...)
 }

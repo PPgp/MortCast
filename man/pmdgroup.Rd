@@ -5,8 +5,15 @@
 \alias{copmd}
 \title{Pattern of Mortality Decline Prediction}
 \usage{
-pmd(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
-  kranges = c(0, 25), keep.lt = FALSE, keep.rho = FALSE)
+pmd(
+  e0,
+  mx0,
+  sex = c("male", "female"),
+  interp.rho = FALSE,
+  kranges = c(0, 25),
+  keep.lt = FALSE,
+  keep.rho = FALSE
+)
 
 copmd(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ...)
 }

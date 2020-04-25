@@ -1,6 +1,6 @@
 #' @useDynLib MortCast, .registration = TRUE
 #' @import stats
-#' @import wpp2019
+#' @import wpp2017
 #' @importFrom utils data
 #' @details 
 #' The package implements methodology described in Sevcikova et al. (2016) that is related to 
@@ -47,14 +47,14 @@
 #' 
 #' @examples
 #' # This example applies Algorithm 2 in Sevcikova et al. (2016) 
-#' # on data from WPP2019 for China
+#' # on data from WPP2017 for China
 #' #
-#' data(mxM, mxF, e0Fproj, e0Mproj, package = "wpp2019")
+#' data(mxM, mxF, e0Fproj, e0Mproj, package = "wpp2017")
 #' country <- "China"
 #' 
 #' # extract observed mortality rates for male and female
-#' mxm <- subset(mxM, name == country)[,4:17]
-#' mxf <- subset(mxF, name == country)[,4:17]
+#' mxm <- subset(mxM, name == country)[,4:16]
+#' mxf <- subset(mxF, name == country)[,4:16]
 #' rownames(mxm) <- rownames(mxf) <- c(0,1, seq(5, 100, by=5))
 #' 
 #' # Step 1: extrapolate from 100+ to 130+ using Coherent Kannisto
@@ -67,19 +67,19 @@
 #'             ax.index = ncol(mx130$male), ax.smooth = TRUE)
 #'         
 #' # Steps 6-9: project future mortality rates based on future 
-#' # life expectancies from WPP2019
+#' # life expectancies from WPP2017
 #' e0f <- as.numeric(subset(e0Fproj, name == country)[-(1:2)])
 #' e0m <- as.numeric(subset(e0Mproj, name == country)[-(1:2)])
 #' names(e0f) <- names(e0m) <- colnames(e0Fproj)[-(1:2)]
 #' pred <- mortcast(e0m, e0f, lc.est)
 #' 
 #' # plot projection for the first and last future time period
-#' plot(pred$female$mx[,"2020-2025"], type="l", log="y", 
+#' plot(pred$female$mx[,"2015-2020"], type="l", log="y", 
 #'     ylim=range(pred$female$mx, pred$male$mx), xaxt="n",
 #'     ylab="mx", xlab="Age", main=country, col="red")
 #' axis(1, at=1:nrow(pred$female$mx),
 #'     labels=rownames(pred$female$mx))
-#' lines(pred$male$mx[,"2020-2025"], col="blue")
+#' lines(pred$male$mx[,"2015-2020"], col="blue")
 #' lines(pred$female$mx[,"2095-2100"], col="red", lty=2)
 #' lines(pred$male$mx[,"2095-2100"], col="blue", lty=2)
 #' legend("topleft", legend=c("male 2015-2020", "female 2015-2020",
