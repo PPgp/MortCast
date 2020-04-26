@@ -190,19 +190,20 @@ void LTextraColumns(int nx, int nage, double *lx, double *Lx,
     }       
     /* sx */
     if(nx > 1) {
-        sx[0] = Lx[0] / lx[0]; /* survival at births; assumes this is 0-1 age group */
-        sx[1] = (Lx[1]/4.0) / Lx[0]; /* survival from 0-1 to 1-5 age group */
-        sx[2] = Lx[2] / (Lx[0] + Lx[1]); /* survival to the 5-10 age group */
+        /* each sx refers to a 5 year interval */
+        /* first age group is survival from births to the second age group */
+        sx[0] = (Lx[0] + Lx[1]) / nx*lx[0];
+        /* second age group is survival age 0-5 to age 5 - 10 */
+        sx[1] = Lx[2] / (Lx[0] + Lx[1]);
+        /* middle age groups  */
+        for(i = 2; i < nage-1; ++i) 
+            sx[i] = Lx[i+1] / Lx[i];
     } else {
         sx[0] = Lx[0] / nx*lx[0];
-        sx[1] = Lx[1] / Lx[0];
-        sx[2] = Lx[2] / Lx[1];
+        /* middle age groups  */
+        for(i = 1; i < nage-1; ++i) 
+            sx[i] = Lx[i] / Lx[i-1];
     }
-    /* middle age groups  */
-    for(i = 3; i < nage-1; ++i) {
-        sx[i] = Lx[i] / Lx[i-1];
-    }
-
     /* last but one age group */
     sx[nage-1] = Lx[nage] / (Lx[nage-1]+Lx[nage]);
     sx[nage]= 0.0;
@@ -243,7 +244,7 @@ void LifeTable1yC(int sex, int nage, double *mx,
 /* Function returns collapsed Lx and lx columns of life table */
 /* function calls doLifeTable first, then collapsesLx and lx  */
 void LifeTableC(int sex, int nage, double *mx,
-                double *Lxx, double *lx) {
+                double *Lxx, double *lxx) {
   /* life table variables returned from doLifeTable */
   /* need to be declared with nage+1 elements       */
   /* Lx[nage+1]
@@ -255,17 +256,17 @@ void LifeTableC(int sex, int nage, double *mx,
    * with nage-1 elements outside 
    */
   
-  double Lx[nage+1], qx[nage+1], ax[nage+1];
+  double Lx[nage+1], lx[nage+1], qx[nage+1], ax[nage+1];
   int i;
   
   /* do life table called with nage as last index */
   doLifeTable(sex, nage, mx, Lx, lx, qx, ax);
   /* collapse 1L0 and 4L1 into 5L0 */
   Lxx[0] = Lx[0] + Lx[1];
-  /*lxx[0] = lx[0];*/
+  lxx[0] = lx[0];
   for(i = 1; i < nage; ++i) {
     Lxx[i] = Lx[i+1];
-    /*lxx[i] = lx[i+1];*/
+    lxx[i] = lx[i+1];
   }
 }
 
@@ -351,13 +352,12 @@ void get_sx(double *LLm, double *sx, int n, int Ldim, int nx) {
     }
     /* Last but one age group */
     sumLL = 0;
-    for(i=oei+1; i < Ldim+1; ++i) {
+    for(i=oei; i < Ldim; ++i) {
         sumLL += LLm[i];
     }
-    if((sumLL + LLm[oei]) == 0 ||  sumLL == 0) sx[oei] = exp(-nx);
-    else sx[oei] = sumLL/(sumLL+LLm[oei]);
+    if((sumLL + LLm[oei-1]) == 0 ||  sumLL == 0) sx[oei] = exp(-nx);
+    else sx[oei] = sumLL/(sumLL+LLm[oei-1]);
     if(sx[oei] > sx[oei-1]) sx[oei] = sx[oei-1];
-    sx[n] = 0.0;
 }
 
 
@@ -369,7 +369,7 @@ void get_sx(double *LLm, double *sx, int n, int Ldim, int nx) {
 void LC(int *Npred, int *Sex, int *Nage, int *Nx, double *ax, double *bx, 
 		double *Eop, double *Kl, double *Ku, int *constrain, double *FMx, double *FEop, 
 		double *LLm, double *Sr, double *lx, double *Mx) {
-	double eop, mxm[*Nage], fmx[*Nage], lm[*Nage], locbx[*Nage], locax[*Nage];
+	double eop, mxm[*Nage], fmx[*Nage], locbx[*Nage], locax[*Nage];
 	int i, sex, npred, pred, nage, nagem1, cage, nx;
 	
 	npred = *Npred;
@@ -381,7 +381,7 @@ void LC(int *Npred, int *Sex, int *Nage, int *Nx, double *ax, double *bx,
 	if(nx == 1) nagem1 = nage;
 	else nagem1 = nage-1;
 	
-	double sx[nagem1], Lm[nagem1];
+	double sx[nagem1], Lm[nagem1], lm[nagem1];
 	
 	if(*constrain == 1) { /* constrain old ages only */ 
 	    if(nx == 1) cage = 100;
@@ -405,19 +405,15 @@ void LC(int *Npred, int *Sex, int *Nage, int *Nx, double *ax, double *bx,
 		}
         /*Rprintf("\npred = %i", pred);*/
 		LCEoKtC(sex, nage, nx, locax, locbx, eop, Kl[pred], Ku[pred], fmx, Lm, lm, mxm);		
-		get_sx(Lm, sx, nagem1-1, nagem1-1, nx);
+		get_sx(Lm, sx, nagem1, nagem1, nx);
 		
 		for (i=0; i < nagem1; ++i) {
-			Sr[i + pred*(nagem1)] = sx[i];
-			/*Rprintf("\nLLm=%lf, Sr=%lf", LLm[i], Sr[i + pred*27]);*/
+			Sr[i + pred*nagem1] = sx[i];
 			Mx[i + pred*nage] = mxm[i];
-			lx[i + pred*nage] = lm[i];
+			lx[i + pred*nagem1] = lm[i];
+			LLm[i + pred*nagem1] = Lm[i];
 		}
 		Mx[nagem1 + pred*nage] = mxm[nagem1];
-		lx[nagem1 + pred*nage] = lm[nagem1];
-		for (i=0; i < nagem1; ++i) {
-			LLm[i + pred*(nagem1)] = Lm[i];
-		}
 	}
 }
 

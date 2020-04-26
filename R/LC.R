@@ -287,7 +287,7 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
     }
     zeromatsr <- matrix(0, nrow=resnage, ncol=npred)
     zeromatmx <- matrix(0, nrow=nage, ncol=npred)
-    ressex <- list(mx=zeromatmx, lx=zeromatmx, sr=zeromatsr, Lx=zeromatsr)
+    ressex <- list(mx=zeromatmx, lx=zeromatsr, sr=zeromatsr, Lx=zeromatsr)
     result <- list(female = ressex, male = ressex)
     
     # rotate bx if needed
@@ -321,8 +321,8 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
                                        dimnames=list(age.groups, names(e0m)))
             result[[sex]]$Lx <- matrix(LCres$LLm, nrow=resnage,
                                        dimnames=list(age.groups, names(e0m)))
-            result[[sex]]$lx <- matrix(LCres$lx, nrow=nage, 
-                                       dimnames=list(names(lc.pars$bx), names(e0m)))
+            result[[sex]]$lx <- matrix(LCres$lx, nrow=resnage, 
+                                       dimnames=list(age.groups, names(e0m)))
         } else {
             result[[sex]]$sr <- NULL
             result[[sex]]$Lx <- NULL
