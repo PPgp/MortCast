@@ -21,7 +21,7 @@
 #'       parameter as described in Li et al. (2013).
 #' }
 #' Functions contained in the package can be used to apply Algorithm 2 in 
-#' Sevcikova et al. (2016) as shown in the Example below.
+#' Sevcikova et al. (2016) as shown in the Example below. It can be used for both, 5-year and 1-year age groups.
 #' 
 #' Other methods for forecasting mortality rates are available:
 #' \itemize{

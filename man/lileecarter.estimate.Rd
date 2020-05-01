@@ -19,7 +19,7 @@ and columns correspond to time periods. For 5-year age groups, the first and sec
 }
 \value{
 List containing elements \code{bx} (coherent \eqn{b_x} parameter), 
-    \code{ultimate.bx} (ultimate \eqn{b^u_x} parameter), and
+    \code{ultimate.bx} (ultimate \eqn{b^u_x} parameter), \code{ages} (age groups), \code{nx} (age group interval), and
   lists \code{female} and \code{male}, each with the Lee-Carter parameters.
 }
 \description{

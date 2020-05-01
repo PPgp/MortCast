@@ -28,14 +28,31 @@ If \code{FALSE}, the \code{mx} vector is interpreted as corresponding to one-yea
 \item{open.age}{Open age group. If smaller than the last age group of \code{mx}, the life table is truncated. 
 It does not have any effect if larger than the last age group.}
 }
+\value{
+Data frame with rows corresponding to age groups and the following columns:
+   \describe{
+      \item{age}{Starting year of the age group.}
+      \item{mx}{Age-specific mortality rates as passed into the \code{mx} argument.}
+      \item{qx}{Probability of dying between ages x and x+n.}
+      \item{lx}{Number of survivors at age x.}
+      \item{dx}{Number of deaths between ages x and x+n.}
+      \item{Lx}{Person-years lived between ages x and x+n.}
+      \item{sx}{Survival rate from age x to x+n. Note that in an abridged life table, sx always refers to 5-year intervals. 
+                Here, sx in the first row is the survival from births to the second age group, sx in the second row 
+                is the survival from age 0-4 to age 5-9, third row has the survival from 5-9 to 10-14 etc.}
+      \item{Tx}{Person-years lived after age x.}
+      \item{ex}{Life expectancy at age x.}
+      \item{ax}{Average person-years lived in the interval by those dying in the interval. For young ages, it follows Preston et al. (2001), Table 3.3 on page 48.
+                For compatibility with computations done at the UN, we set ax for ages 5 and 10 in the abridged version
+                to 2.5. For an unabridged life table, ax is set to 0.5 for all but first and last age groups.}
+}
+}
 \description{
 Function for obtaining life table quantities from mortality rates.
 }
 \details{
 Computes a life table corresponding to given mortality rates for either 5- or 1-year age groups. The implementation follows
-   Preston et al. (2001), including the choice of ax (see Table 3.3 on page 48). 
-   For compatibility with computations done at the UN, we set ax for ages 5 and 10 
-   (in the abridged version) to 2.5.
+   Preston et al. (2001), including the choice of ax (see Table 3.3 on page 48).
 }
 \examples{
 data(mxF, e0Fproj, package = "wpp2017")

@@ -2,8 +2,6 @@
 #' @description Function for obtaining life table quantities from mortality rates.
 #' @details Computes a life table corresponding to given mortality rates for either 5- or 1-year age groups. The implementation follows
 #'    Preston et al. (2001), including the choice of ax (see Table 3.3 on page 48). 
-#'    For compatibility with computations done at the UN, we set ax for ages 5 and 10 
-#'    (in the abridged version) to 2.5.
 #' @param mx Vector of age-specific mortality rates nmx. If \code{abridged} is \code{TRUE} (default), 
 #'    the elements correspond to 1m0, 4m1, 5m5, 5m10, \dots. 
 #'    If \code{abridged} is \code{FALSE}, they correspond to 1m0, 1m1, 1m2, 1m3, \dots.
@@ -14,6 +12,23 @@
 #' @param radix Base of the life table.
 #' @param open.age Open age group. If smaller than the last age group of \code{mx}, the life table is truncated. 
 #'    It does not have any effect if larger than the last age group.
+#' @return Data frame with rows corresponding to age groups and the following columns:
+#'    \describe{
+#'       \item{age}{Starting year of the age group.}
+#'       \item{mx}{Age-specific mortality rates as passed into the \code{mx} argument.}
+#'       \item{qx}{Probability of dying between ages x and x+n.}
+#'       \item{lx}{Number of survivors at age x.}
+#'       \item{dx}{Number of deaths between ages x and x+n.}
+#'       \item{Lx}{Person-years lived between ages x and x+n.}
+#'       \item{sx}{Survival rate from age x to x+n. Note that in an abridged life table, sx always refers to 5-year intervals. 
+#'                 Here, sx in the first row is the survival from births to the second age group, sx in the second row 
+#'                 is the survival from age 0-4 to age 5-9, third row has the survival from 5-9 to 10-14 etc.}
+#'       \item{Tx}{Person-years lived after age x.}
+#'       \item{ex}{Life expectancy at age x.}
+#'       \item{ax}{Average person-years lived in the interval by those dying in the interval. For young ages, it follows Preston et al. (2001), Table 3.3 on page 48.
+#'                 For compatibility with computations done at the UN, we set ax for ages 5 and 10 in the abridged version
+#'                 to 2.5. For an unabridged life table, ax is set to 0.5 for all but first and last age groups.}
+#' }
 #' @references 
 #'    Preston, S.H., Heuveline, P., Guillot, M. (2001). Demography: Measuring and Modeling Population Processes. Oxford: Blackwell Publishers Ltd.
 #' @export
@@ -25,7 +40,7 @@
 #' life.table(mxf, sex = "female")
 #' 
 life.table <- function(mx, sex = c("male", "female", "total"), abridged = TRUE, radix = 1, open.age = 130){
-    # The first two elements of mx must correspond to 0-1 and 1-4. 
+    # If abridged is TRUE, the first two elements of mx must correspond to 0-1 and 1-4. 
     # If include01 is FALSE, the first two age groups of the results are collapsed to 0-5
     sex <- match.arg(sex)
     sex <- list(male=1, female=2, total=3)[[sex]]

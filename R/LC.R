@@ -13,8 +13,8 @@
 #' @param ax.smooth Logical allowing to smooth the \eqn{a_x} over ages.
 #' @param bx.postprocess Logical determining if numerical anomalies in \eqn{b_x} should be dealt with.
 #' @param nx Size of age groups. By default ages are determined by rownames of \code{mx}. This argument is only used if 
-#'     \code{mx} has no rownames. If \code{nx} is 5, the age groups are 0, 1, 5, 10, \dots. For \code{nx} equals 1, 
-#'     the age groups are 0, 1, 2, 3, \dots.
+#'     \code{mx} has no rownames. If \code{nx} is 5, the age groups are interpreted as 0, 1, 5, 10, \dots. For \code{nx} equals 1, 
+#'     the age groups are interpreted as 0, 1, 2, 3, \dots.
 #' @return List with elements \code{ax}, \code{bx} and \code{kt} corresponding to the estimated parameters.
 #' @export
 #' @seealso \code{\link{mortcast}}, \code{\link{lileecarter.estimate}}
@@ -103,7 +103,7 @@ bx.estimate <- function(lmx, ax, kt, postprocess=TRUE) {
 #' @param nx Size of age groups. Should be either 5 or 1.
 #' @param ... Additional arguments passed to \code{\link{leecarter.estimate}}.
 #' @return List containing elements \code{bx} (coherent \eqn{b_x} parameter), 
-#'     \code{ultimate.bx} (ultimate \eqn{b^u_x} parameter), and
+#'     \code{ultimate.bx} (ultimate \eqn{b^u_x} parameter), \code{ages} (age groups), \code{nx} (age group interval), and
 #'   lists \code{female} and \code{male}, each with the Lee-Carter parameters.
 #' @export
 #' 
@@ -127,8 +127,13 @@ bx.estimate <- function(lmx, ax, kt, postprocess=TRUE) {
 lileecarter.estimate <- function(mxM, mxF, nx = 5, ...) {
     lc.male <- leecarter.estimate(mxM, nx = nx, ...)
     lc.female <- leecarter.estimate(mxF, nx = nx, ...)
+    if(length(lc.female$ax) != length(lc.male$ax) || length(lc.female$kt) != length(lc.male$kt))
+        stop("Mismatch in dimensions of male and female mortality. Check the mxM and mxF arguments.")
     bx <- (lc.male$bx + lc.female$bx)/2
-    return(list(bx = bx, ultimate.bx = ultimate.bx(bx), nx = nx, 
+    ages <- as.integer(names(lc.female$bx))
+    # correct nx if wrong input
+    nx <- ages[4] - ages[3]
+    return(list(bx = bx, ultimate.bx = ultimate.bx(bx), ages = ages, nx = nx, 
                 female=list(ax=lc.female$ax, bx=bx, kt=lc.female$kt, sex.bx = lc.female$bx),
                 male=list(ax=lc.male$ax, bx=bx, kt=lc.male$kt, sex.bx = lc.male$bx)
             ))
@@ -219,11 +224,12 @@ ultimate.bx <- function(bx) {
 #' @title Coherent Rotated Lee-Carter Prediction
 #' @description Predict age-specific mortality rates using the coherent rotated Lee-Carter method.
 #' @details This function implements Steps 6-9 of Algorithm 2 in Sevcikova et al. (2016). 
-#'     It uses an abridged life table function to find the level of mortality that coresponds to the given 
-#'     life expectancy. 
+#'     It uses the abridged or unabridged life table function to find the level of mortality that coresponds to the given 
+#'     life expectancy. Thus, it can be used for both, mortality for 5- or 1-year age groups. 
 #' @param e0m A time series of future male life expectancy.
 #' @param e0f A time series of future female life expectancy.
 #' @param lc.pars A list of coherent Lee-Carter parameters with elements \code{bx}, \code{ultimate.bx},
+#'     \code{ages}, \code{nx}, 
 #'     \code{female} and \code{male} as returned by \code{\link{lileecarter.estimate}}. 
 #'     The \code{female} and \code{male} objects are again lists that should contain a vector
 #'     \code{ax} and optionally a matrix \code{axt} if the \eqn{a_x} parameter 
@@ -252,22 +258,44 @@ ultimate.bx <- function(bx) {
 #' and Population Analysis, vol 39. Springer, Cham
 #' 
 #' @examples
+#' # estimate parameters from historical mortality data (5-year age groups)
 #' data(mxM, mxF, e0Fproj, e0Mproj, package = "wpp2017")
 #' country <- "Brazil"
-#' # estimate parameters from historical mortality data
 #' mxm <- subset(mxM, name == country)[,4:16]
 #' mxf <- subset(mxF, name == country)[,4:16]
 #' rownames(mxm) <- rownames(mxf) <- c(0,1, seq(5, 100, by=5))
 #' lc <- lileecarter.estimate(mxm, mxf)
-#' # project into future
+#' 
+#' # project into future for given levels of life expectancy
 #' e0f <- as.numeric(subset(e0Fproj, name == country)[-(1:2)])
 #' e0m <- as.numeric(subset(e0Mproj, name == country)[-(1:2)])
 #' pred <- mortcast(e0m, e0f, lc)
-#' # plot first projection in black and the remaining ones in grey 
-#' plot(pred$female$mx[,1], type="l", log="y", ylim=range(pred$female$mx),
-#'     ylab="female mx", xlab="Age", main=country)
-#' for(i in 2:ncol(pred$female$mx)) lines(pred$female$mx[,i], col="grey")
 #' 
+#' # plot first projection in black and the remaining ones in grey 
+#' plot(lc$ages, pred$female$mx[,1], type="b", log="y", ylim=range(pred$female$mx),
+#'     ylab="female mx", xlab="Age", main=paste(country, "(5-year age groups)"), cex=0.5)
+#' for(i in 2:ncol(pred$female$mx)) lines(lc$ages, pred$female$mx[,i], col="grey")
+#'
+#' # similarly for 1-year age groups
+#' # interpolate to get toy 1-year mx for estimation
+#' interp <- function(x)
+#'     approx(c(0,1, seq(5, 100, by=5)), x, xout = seq(0, 100), method = "linear")$y
+#' mxm1y <- apply(mxm, 2, interp)
+#' mxf1y <- apply(mxf, 2, interp)
+#' rownames(mxm1y) <- rownames(mxf1y) <- seq(0, 100)
+#' 
+#' # estimate parameters
+#' lc1y <- lileecarter.estimate(mxm1y, mxf1y, nx = 1)
+#'  
+#' # project into future 
+#' pred1y <- mortcast(e0m, e0f, lc1y)
+#' 
+#' # plot first projection in black and the remaining ones in grey 
+#' plot(lc1y$ages, pred1y$female$mx[,1], type="b", log="y", ylim=range(pred1y$female$mx),
+#'     ylab="female mx", xlab="Age", main=paste(country, "(1-year age groups)"), cex=0.5)
+#' for(i in 2:ncol(pred1y$female$mx)) lines(lc1y$ages, pred1y$female$mx[,i], col="grey")
+#' 
+
 mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE, 
                       constrain.all.ages = FALSE) {
     # if e0 is a data.frame, convert to vector (it would not drop dimension without as.matrix)
@@ -277,16 +305,17 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
     # prepare for computation
     e0  <- list(female=e0f, male=e0m)
     npred <- length(e0f)
-    nage <- length(lc.pars$female$ax)
+    nage <- length(lc.pars$ages)
     if(lc.pars$nx > 1) {
         resnage <-  nage-1 # number of age groups of the resulting matrices 
-        age.groups <- names(lc.pars$bx)[-2] # group 0-1 collapsed into 0-5
+        age.groups <- lc.pars$ages[-2] # group 0-1 collapsed into 0-5
     } else {
         resnage <-  nage # all ages
-        age.groups <- names(lc.pars$bx)
+        age.groups <- lc.pars$ages
     }
     zeromatsr <- matrix(0, nrow=resnage, ncol=npred)
     zeromatmx <- matrix(0, nrow=nage, ncol=npred)
+    # in an abridged case, lx, Lx and sr will be returned for 5-year intervals
     ressex <- list(mx=zeromatmx, lx=zeromatsr, sr=zeromatsr, Lx=zeromatsr)
     result <- list(female = ressex, male = ressex)
     
@@ -303,7 +332,7 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
     
     # compute ranges for k(t)
     kranges <- .kranges(Bxt, lc.pars$male$axt, lc.pars$female$axt)
-    #browser()
+
     #Get the projected kt from e0, and make projection of Mx
     for (sex in c("female", "male")) { # iterate over female and male (order matters because of the constrain)
         LCres <- .C("LC", as.integer(npred), as.integer(c(female=2, male=1)[sex]), as.integer(nage), as.integer(lc.pars$nx),
@@ -315,7 +344,7 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
                   LLm = as.numeric(result[[sex]]$Lx), Sr=as.numeric(result[[sex]]$sr), 
                   lx=as.numeric(result[[sex]]$lx), Mx=as.numeric(result[[sex]]$mx))
         result[[sex]]$mx <- matrix(LCres$Mx, nrow=nage, 
-                                   dimnames=list(names(lc.pars$bx), names(e0m)))
+                                   dimnames=list(lc.pars$ages, names(e0m)))
         if(keep.lt) {
             result[[sex]]$sr <- matrix(LCres$Sr, nrow=resnage,
                                        dimnames=list(age.groups, names(e0m)))

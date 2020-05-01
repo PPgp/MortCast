@@ -24,8 +24,8 @@ By default all time periods are used.}
 \item{bx.postprocess}{Logical determining if numerical anomalies in \eqn{b_x} should be dealt with.}
 
 \item{nx}{Size of age groups. By default ages are determined by rownames of \code{mx}. This argument is only used if 
-\code{mx} has no rownames. If \code{nx} is 5, the age groups are 0, 1, 5, 10, \dots. For \code{nx} equals 1, 
-the age groups are 0, 1, 2, 3, \dots.}
+\code{mx} has no rownames. If \code{nx} is 5, the age groups are interpreted as 0, 1, 5, 10, \dots. For \code{nx} equals 1, 
+the age groups are interpreted as 0, 1, 2, 3, \dots.}
 }
 \value{
 List with elements \code{ax}, \code{bx} and \code{kt} corresponding to the estimated parameters.

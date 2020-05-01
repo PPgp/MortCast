@@ -413,7 +413,7 @@ void LC(int *Npred, int *Sex, int *Nage, int *Nx, double *ax, double *bx,
 			lx[i + pred*nagem1] = lm[i];
 			LLm[i + pred*nagem1] = Lm[i];
 		}
-		Mx[nagem1 + pred*nage] = mxm[nagem1];
+		if(nx > 1) Mx[nagem1 + pred*nage] = mxm[nagem1]; /* for nx=5, mx has one age group more than the rest */
 	}
 }
 

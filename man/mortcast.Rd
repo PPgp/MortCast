@@ -19,6 +19,7 @@ mortcast(
 \item{e0f}{A time series of future female life expectancy.}
 
 \item{lc.pars}{A list of coherent Lee-Carter parameters with elements \code{bx}, \code{ultimate.bx},
+\code{ages}, \code{nx}, 
 \code{female} and \code{male} as returned by \code{\link{lileecarter.estimate}}. 
 The \code{female} and \code{male} objects are again lists that should contain a vector
 \code{ax} and optionally a matrix \code{axt} if the \eqn{a_x} parameter 
@@ -44,25 +45,46 @@ Predict age-specific mortality rates using the coherent rotated Lee-Carter metho
 }
 \details{
 This function implements Steps 6-9 of Algorithm 2 in Sevcikova et al. (2016). 
-    It uses an abridged life table function to find the level of mortality that coresponds to the given 
-    life expectancy.
+    It uses the abridged or unabridged life table function to find the level of mortality that coresponds to the given 
+    life expectancy. Thus, it can be used for both, mortality for 5- or 1-year age groups.
 }
 \examples{
+# estimate parameters from historical mortality data (5-year age groups)
 data(mxM, mxF, e0Fproj, e0Mproj, package = "wpp2017")
 country <- "Brazil"
-# estimate parameters from historical mortality data
 mxm <- subset(mxM, name == country)[,4:16]
 mxf <- subset(mxF, name == country)[,4:16]
 rownames(mxm) <- rownames(mxf) <- c(0,1, seq(5, 100, by=5))
 lc <- lileecarter.estimate(mxm, mxf)
-# project into future
+
+# project into future for given levels of life expectancy
 e0f <- as.numeric(subset(e0Fproj, name == country)[-(1:2)])
 e0m <- as.numeric(subset(e0Mproj, name == country)[-(1:2)])
 pred <- mortcast(e0m, e0f, lc)
+
 # plot first projection in black and the remaining ones in grey 
-plot(pred$female$mx[,1], type="l", log="y", ylim=range(pred$female$mx),
-    ylab="female mx", xlab="Age", main=country)
-for(i in 2:ncol(pred$female$mx)) lines(pred$female$mx[,i], col="grey")
+plot(lc$ages, pred$female$mx[,1], type="b", log="y", ylim=range(pred$female$mx),
+    ylab="female mx", xlab="Age", main=paste(country, "(5-year age groups)"), cex=0.5)
+for(i in 2:ncol(pred$female$mx)) lines(lc$ages, pred$female$mx[,i], col="grey")
+
+# similarly for 1-year age groups
+# interpolate to get toy 1-year mx for estimation
+interp <- function(x)
+    approx(c(0,1, seq(5, 100, by=5)), x, xout = seq(0, 100), method = "linear")$y
+mxm1y <- apply(mxm, 2, interp)
+mxf1y <- apply(mxf, 2, interp)
+rownames(mxm1y) <- rownames(mxf1y) <- seq(0, 100)
+
+# estimate parameters
+lc1y <- lileecarter.estimate(mxm1y, mxf1y, nx = 1)
+ 
+# project into future 
+pred1y <- mortcast(e0m, e0f, lc1y)
+
+# plot first projection in black and the remaining ones in grey 
+plot(lc1y$ages, pred1y$female$mx[,1], type="b", log="y", ylim=range(pred1y$female$mx),
+    ylab="female mx", xlab="Age", main=paste(country, "(1-year age groups)"), cex=0.5)
+for(i in 2:ncol(pred1y$female$mx)) lines(lc1y$ages, pred1y$female$mx[,i], col="grey")
 
 }
 \references{
