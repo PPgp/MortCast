@@ -318,7 +318,6 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
     # in an abridged case, lx, Lx and sr will be returned for 5-year intervals
     ressex <- list(mx=zeromatmx, lx=zeromatsr, sr=zeromatsr, Lx=zeromatsr)
     result <- list(female = ressex, male = ressex)
-    
     # rotate bx if needed
     if(rotate)
         Bxt <- rotate.leecarter(lc.pars$bx, lc.pars$ultimate.bx, (e0f + e0m)/2)

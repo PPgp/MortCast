@@ -288,10 +288,11 @@ void LTforLC(int sex, int nage, int nx, double *mx,
 void LCEoKtC(int sex, int nage, int nx, double *ax, double *bx, 
 			 double eop, double kl, double ku, double *constraints, 
 			 double *LLm, double *lm, double *Mx) {
-	double LTl[nage-1], LTu[nage-1], mxm[nage], LTeo, k2;
+	double mxm[nage], LTeo, k2;
 	int i, dim;
 	if(nx == 1) dim = nage;
 	else dim = nage-1;
+	double LTl[dim], LTu[dim];
 
 	/* check if the eop lies outside of the bounds */
 	for (i=0; i < nage; ++i) {
@@ -388,7 +389,6 @@ void LC(int *Npred, int *Sex, int *Nage, int *Nx, double *ax, double *bx,
 	    else cage = 22; 
 	}
 	if(*constrain == 2) cage = 0;  /* constrain all ages */
-	
 	for (i=0; i < nage; ++i) fmx[i] = -1;
 	for (pred=0; pred < npred; ++pred) {
 		eop = Eop[pred];
@@ -403,7 +403,7 @@ void LC(int *Npred, int *Sex, int *Nage, int *Nx, double *ax, double *bx,
 			locbx[i] = bx[i + pred*nage];
 			locax[i] = ax[i + pred*nage];
 		}
-        /*Rprintf("\npred = %i", pred);*/
+
 		LCEoKtC(sex, nage, nx, locax, locbx, eop, Kl[pred], Ku[pred], fmx, Lm, lm, mxm);		
 		get_sx(Lm, sx, nagem1, nagem1, nx);
 		
