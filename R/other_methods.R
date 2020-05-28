@@ -237,7 +237,8 @@ copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ..
 #' @title Model Life Tables Mortality Patterns
 #' @description Predict age-specific mortality rates using Coale-Demeny and UN model life tables.
 #' @details Given a level of life expectancy (e0), sex and a type of model life table, the function 
-#'     extracts the corresponding mortality pattern from \code{\link{MLTlookup}}, 
+#'     extracts the corresponding mortality pattern from \code{\link{MLTlookup}} (for abridged LT) 
+#'     or \code{\link{MLT1Ylookup}} (for 1-year LT), 
 #'     while interpolating between neighboring e0 groups.
 #'     Function \code{mlt} is for one sex, while \code{mltj} can be used for both sexes.
 #' @param e0 A time series of target life expectancy.
@@ -245,7 +246,8 @@ copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ..
 #' @param type Type of the model life table. Available options are \dQuote{CD_East}, \dQuote{CD_North}, 
 #' \dQuote{CD_South}, \dQuote{CD_West}, \dQuote{UN_Chilean}, \dQuote{UN_Far_Eastern}, 
 #' \dQuote{UN_General}, \dQuote{UN_Latin_American}, \dQuote{UN_South_Asian}. 
-#' @return Function \code{mlt} returns a matrix with the predicted mortality rates. Columns correpond 
+#' @param nx Size of age groups. Should be either 5 or 1.
+#' @return Function \code{mlt} returns a matrix with the predicted mortality rates. Columns correspond 
 #'     to the values in the \code{e0} vector and rows correspond to age groups. 
 #'     Function \code{mltj} returns a list of such matrices, one for each sex.
 #' @export
@@ -272,11 +274,13 @@ copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ..
 #' 
 #' @rdname mltgroup
 
-mlt <- function(e0, sex = c("male", "female"), type = "CD_West") {
+mlt <- function(e0, sex = c("male", "female"), type = "CD_West", nx = 5) {
     sex <- match.arg(sex)
     sexcode <- c(female=2, male=1)[sex]
     if(length(dim(e0)) > 0) e0 <- drop(as.matrix(e0)) # if it's a data.frame, it would not drop dimension without as.matrix
-    lookup <- MortCast::MLTlookup
+    if(!nx %in% c(1, 5))
+        stop("The nx argument must be either 5 or 1.")
+    lookup <- if(nx == 5) MortCast::MLTlookup else MortCast::MLT1Ylookup
     conv.type <- gsub(" |_", "", type)
     conv.mlttypes <- gsub(" |_", "", lookup$type)
     if(! conv.type %in% conv.mlttypes) {
