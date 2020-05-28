@@ -1,19 +1,23 @@
 #' @title Model Life Tables Lookup
+#' @name MLTlookup
+#' @aliases MLTlookup MLT1Ylookup
 #' @docType data
-#' @description Lookup table containing values for various model life tables, including 
+#' @description Lookup tables containing values for various model life tables, including 
 #' Coale-Demeny and UN life tables.
 #' 
 #' @usage data(MLTlookup)
+#' data(MLT1Ylookup)
 #'
 #' @format Data frame with the following columns:
 #' \describe{
 #' \item{type}{Type of the model life table. Available options are \dQuote{CD_East}, \dQuote{CD_North}, 
 #' \dQuote{CD_South}, \dQuote{CD_West}, \dQuote{UN_Chilean}, \dQuote{UN_Far_Eastern}, 
 #' \dQuote{UN_General}, \dQuote{UN_Latin_American}, \dQuote{UN_South_Asian}. 
-#' For the CD types, see Coale et al. (1983). For the UN types, see \url{https://population.un.org/wpp/Download/Other/MLT}.
+#' For the CD types, see Coale et al. (1983). For the UN types, see the link in References below.
 #' }
 #' \item{sex}{Code for distinguishing sexes. 1 is for male, 2 is for female.}
-#' \item{age}{Starting age of an age group. These are 0, 1, 5, 10, ... 130.}
+#' \item{age}{Starting age of an age group. In \code{MLTlookup} these are 0, 1, 5, 10, ... 130. 
+#'            The \code{MLT1Ylookup} table contains 1-year ages ranging from 0 to 130.}
 #' \item{e0}{Level of life expectancy, starting at 20 and going by steps of 2.5 up to 130.}
 #' \item{mx}{Mortality rates.}
 #' \item{lx, Lx, sx}{Other life table columns.}
@@ -25,7 +29,7 @@
 #' Coale, A., P. Demeny, and B. Vaughn. 1983. Regional model life tables and stable 
 #' populations. 2nd ed. New York: Academic Press.
 #' 
-#' \url{https://population.un.org/wpp/Download/Other/MLT}
+#' \url{https://www.un.org/development/desa/pd/data/extended-model-life-tables}
 #' 
 #' @examples 
 #' data(MLTlookup)

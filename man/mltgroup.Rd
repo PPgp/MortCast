@@ -5,7 +5,7 @@
 \alias{mltj}
 \title{Model Life Tables Mortality Patterns}
 \usage{
-mlt(e0, sex = c("male", "female"), type = "CD_West")
+mlt(e0, sex = c("male", "female"), type = "CD_West", nx = 5)
 
 mltj(e0m, e0f, ...)
 }
@@ -18,6 +18,8 @@ mltj(e0m, e0f, ...)
 \dQuote{CD_South}, \dQuote{CD_West}, \dQuote{UN_Chilean}, \dQuote{UN_Far_Eastern}, 
 \dQuote{UN_General}, \dQuote{UN_Latin_American}, \dQuote{UN_South_Asian}.}
 
+\item{nx}{Size of age groups. Should be either 5 or 1.}
+
 \item{e0m}{A time series of target male life expectancy.}
 
 \item{e0f}{A time series of target female life expectancy.}
@@ -25,7 +27,7 @@ mltj(e0m, e0f, ...)
 \item{\dots}{Additional arguments passed to the underlying function.}
 }
 \value{
-Function \code{mlt} returns a matrix with the predicted mortality rates. Columns correpond 
+Function \code{mlt} returns a matrix with the predicted mortality rates. Columns correspond 
     to the values in the \code{e0} vector and rows correspond to age groups. 
     Function \code{mltj} returns a list of such matrices, one for each sex.
 }
@@ -34,7 +36,8 @@ Predict age-specific mortality rates using Coale-Demeny and UN model life tables
 }
 \details{
 Given a level of life expectancy (e0), sex and a type of model life table, the function 
-    extracts the corresponding mortality pattern from \code{\link{MLTlookup}}, 
+    extracts the corresponding mortality pattern from \code{\link{MLTlookup}} (for abridged LT) 
+    or \code{\link{MLT1Ylookup}} (for 1-year LT), 
     while interpolating between neighboring e0 groups.
     Function \code{mlt} is for one sex, while \code{mltj} can be used for both sexes.
 }
@@ -47,12 +50,20 @@ e0f <- subset(e0Fproj, name == country)[-(1:2)]
 mx <- mlt(e0f, sex = "female", type = "CD_North")
 # plot first projection in black and the remaining ones in grey 
 plot(mx[,1], type = "l", log = "y", ylim = range(mx),
-    ylab = "female mx", xlab = "Age", main = country)
+    ylab = "female mx", xlab = "Age", 
+    main = paste(country, "5-year age groups"))
 for(i in 2:ncol(mx)) lines(mx[,i], col = "grey")
 
+# MLT for 1-year age groups
+mx1y <- mlt(e0f, sex = "female", type = "CD_North", nx = 1)
+plot(mx1y[,1], type = "l", log = "y", ylim = range(mx1y),
+    ylab = "female mx", xlab = "Age", 
+    main = paste(country, "1-year age groups"))
+for(i in 2:ncol(mx1y)) lines(mx1y[,i], col = "grey")
+    
 }
 \references{
-\url{https://population.un.org/wpp/Download/Other/MLT}
+\url{https://www.un.org/development/desa/pd/data/extended-model-life-tables}
 
 Coale, A., P. Demeny, and B. Vaughn. 1983. Regional model life tables and stable 
 populations. 2nd ed. New York: Academic Press.

@@ -19,6 +19,7 @@
 #' @param e0 A vector of target life expectancy, one element for each predicted time point. 
 #' @param mx0 A vector with starting age-specific mortality rates.
 #' @param sex Either "male" or "female".
+#' @param nx Size of age groups. Should be either 5 or 1.
 #' @param interp.rho Logical controlling if the \eqn{\rho} coefficients should be interpolated 
 #'     (\code{TRUE}) or if the raw (binned) version should be used (\code{FALSE}), as stored in 
 #'     the dataset \code{\link{PMDrho}}.
@@ -59,7 +60,7 @@
 #'
 #' @rdname pmdgroup
 
-pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
+pmd <- function(e0, mx0, sex = c("male", "female"), nx = 5, interp.rho = FALSE,
                 kranges = c(0, 25), keep.lt = FALSE, keep.rho = FALSE) {
     sex <- match.arg(sex)
     if(length(dim(e0)) > 0) e0 <- drop(as.matrix(e0)) # if it's a data.frame, it would not drop dimension without as.matrix
@@ -69,23 +70,23 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
     nage <- length(mx0)
     # initialize results
     rho <- .find.pmd.rho(if(sex == "male") MortCast::RhoMales else MortCast::RhoFemales, 
-                         e0, nage, npred, interp.rho = interp.rho)
+                         e0, nage, npred, interp.rho = interp.rho, nx = nx)
     mx0l <- list(mx0)
     e0l <- list(e0)
     names(mx0l) <- names(e0l) <- sex
-    res <- .do.copmd(e0l, mx0l, rho = rho, npred = npred, kranges = kranges,
+    res <- .do.copmd(e0l, mx0l, rho = rho, npred = npred, nx = nx, kranges = kranges,
                      keep.lt = keep.lt)
     if(keep.rho)
         res[[sex]]$rho <- rho
     return(res[[sex]])
 }
 
-.find.pmd.rho <- function(rho, e0, nage, npred, interp.rho = FALSE) {
+.find.pmd.rho <- function(rho, e0, nage, npred, interp.rho = FALSE, nx = 5) {
     rhocols <- colnames(rho)
     rho.mids <- as.numeric(rhocols) # mid points
     brks <- c(0, rho.mids + 2.5, 200)
     # find rho for all e0
-    this.rho <- matrix(0, nrow = nage, ncol = npred)
+    this.rho <- matrix(0, nrow = nrow(rho), ncol = npred)
     for(time in 1:npred) {
         irho <- min(findInterval(e0[time], brks, left.open = FALSE), length(rhocols))
         rho.level <- rhocols[irho]
@@ -106,27 +107,42 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
             }
         }
     }
+    # if this.rho has a different number of age groups than desired, interpolate between ages
+    if(nx == 1) {
+        interp <- function(x)
+                      approx(as.integer(rownames(rho)), x, xout = seq(0, nage - 1), method = "linear")$y
+        this.rho <- apply(this.rho, 2, interp)
+    }
     return(this.rho)
 }
 
-.do.copmd <- function(e0l, mx0l, rho, npred, kranges = c(0, 25), keep.lt = FALSE, 
+.do.copmd <- function(e0l, mx0l, rho, npred, nx = 5, kranges = c(0, 25), keep.lt = FALSE, 
                       sexratio.adjust = FALSE, adjust.sr.if.needed = FALSE, adjust.with.mxf = FALSE) {
     # e0l and mx0l should be named lists of e0 and mx0 arrays with names being male and/or female. 
     # PMD is performed on all elements of the list using the same rho
     sexes <- c("female", "male")
     if(! ((all(names(mx0l) %in% sexes)) | all(names(e0l) %in% sexes)))
         stop("Names of the e0l and mx0l lists must be 'male' and/or 'female'.")
+    if(!nx %in% c(1, 5))
+        stop("The nx argument must be either 5 or 1.")
     nage <- length(mx0l[[1]])
-    default.ages <- c(0, 1, seq(5, length = nage - 2, by = 5))
+    if(nx == 5) {
+        default.ages <- c(0, 1, seq(5, length = nage - 2, by = 5))
+        resnage <-  nage-1 # number of age groups of the resulting matrices 
+        age.groups <- default.ages[-2] # group 0-1 collapsed into 0-5
+    } else {
+        default.ages <- seq(0, nage - 1)
+        resnage <-  nage # all ages
+        age.groups <- default.ages
+    }
     # initialize results
-    zeromatsr <- matrix(0, nrow=nage-1, ncol=npred)
+    zeromatsr <- matrix(0, nrow=resnage, ncol=npred)
     zeromatmx <- matrix(0, nrow=nage, ncol=npred)
-    ressex <- list(mx=zeromatmx, lx=zeromatmx, sr=zeromatsr, Lx=zeromatsr)
+    ressex <- list(mx=zeromatmx, lx=zeromatsr, sr=zeromatsr, Lx=zeromatsr)
     result <- list(female = ressex, male = ressex)
     sex.ratio.ini <- rep(0, nage)
     constraint <- -1
     nconstr <- 0
-    nx <- 5
     # iterate over sexes - rho stays the same
     for(sex in sexes) { # important that female is processed first because of a possible sex constraint
         if(!sex %in% names(mx0l)) next
@@ -144,9 +160,9 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
         result[[sex]]$mx <- matrix(PMDres$Mx, nrow=nage, 
                                    dimnames=list(ages, names(e0l[[sex]])))
         if(keep.lt) {
-            result[[sex]]$sr <- matrix(PMDres$Sr, nrow=nage-1, dimnames=list(ages[-2], names(e0l[[sex]])))
-            result[[sex]]$Lx <- matrix(PMDres$LLm, nrow=nage-1, dimnames=list(ages[-2], names(e0l[[sex]])))
-            result[[sex]]$lx <- matrix(PMDres$lx, nrow=nage, dimnames=list(ages, names(e0l[[sex]])))
+            result[[sex]]$sr <- matrix(PMDres$Sr, nrow=resnage, dimnames=list(age.groups, names(e0l[[sex]])))
+            result[[sex]]$Lx <- matrix(PMDres$LLm, nrow=resnage, dimnames=list(age.groups, names(e0l[[sex]])))
+            result[[sex]]$lx <- matrix(PMDres$lx, nrow=resnage, dimnames=list(age.groups, names(e0l[[sex]])))
         } else {
             result[[sex]]$sr <- NULL
             result[[sex]]$Lx <- NULL
@@ -157,19 +173,25 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
             if(adjust.sr.if.needed) { # 
                 sex.ratio.ini <- as.numeric(mx0l[["male"]]/mx0l[["female"]])
             } else {
+                minmx <- NULL
                 if(adjust.with.mxf) { # using female mx
                     minmx <- result$female$mx
                 } else { # using Danan's regression
-                    minmx <- matrix(-1, nrow = nrow(MortCast::PMDadjcoef), ncol = npred)
-                    for(iage in 1:nrow(minmx)) {
-                        coef <- MortCast::PMDadjcoef[iage, ]
-                        minmx[iage,] <-  10^(coef[,"intercept"] + coef[,"lmxf"]*log10(result[[sex]]$mx[iage,]) + 
+                    if(nx == 1) warning("No PMD regression adjustment for nx = 1")
+                    else {
+                        minmx <- matrix(-1, nrow = nrow(MortCast::PMDadjcoef), ncol = npred)
+                        for(iage in 1:nrow(minmx)) {
+                            coef <- MortCast::PMDadjcoef[iage, ]
+                            minmx[iage,] <-  10^(coef[,"intercept"] + coef[,"lmxf"]*log10(result[[sex]]$mx[iage,]) + 
                                          coef[,"e0f"]*e0l$female + coef[,"e0f2"]*e0l$female^2 + coef[,"gap"]*(e0l$female - e0l$male))
+                        }
                     }
                 }
-                minmx[,e0l$male > e0l$female] <- -1 # apply only if e0F >= e0M
-                constraint <- as.numeric(minmx)
-                nconstr <- nrow(minmx)
+                if(!is.null(minmx)) {
+                    minmx[,e0l$male > e0l$female] <- -1 # apply only if e0F >= e0M
+                    constraint <- as.numeric(minmx)
+                    nconstr <- nrow(minmx)
+                }
             }
         }
     }
@@ -182,6 +204,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
 #' @param e0f A time series of target female life expectancy.
 #' @param mxm0 A vector with starting age-specific male mortality rates.
 #' @param mxf0 A vector with starting age-specific female mortality rates.
+#' @param nx Size of age groups. Should be either 5 or 1.
 #' @param \dots Additional arguments passed to the underlying function. For \code{copmd}, in addition to
 #'      \code{kranges} and \code{keep.lt}, it can be \code{sexratio.adjust} which is 
 #'      a logical controlling if a sex-ratio adjustment should be applied to prevent crossovers 
@@ -198,7 +221,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), interp.rho = FALSE,
 #'     In addition if \code{keep.rho} is \code{TRUE}, element \code{rho.sex} 
 #'     gives the sex-dependent (i.e. not averaged) \eqn{\rho_x} coefficient.
 #' 
-copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ...) {
+copmd <- function(e0m, e0f, mxm0, mxf0, nx = 5, interp.rho = FALSE, keep.rho = FALSE, ...) {
     e0  <- list(female=e0f, male=e0m)
     mx0  <- list(female=mxf0, male=mxm0)
     for(sex in names(e0)) {
@@ -215,16 +238,16 @@ copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ..
     if(length(mx0$female) != nage)
         stop("Mismatch in length of the mx0 vectors.")
     # derive rho as an average over male and female
-    if(nage != nrow(MortCast::RhoMales)) {
+    if(nx == 5 && nage != nrow(MortCast::RhoMales)) {
         warning("Mismatch in length of mx0 and the coefficient dataset. mx truncated to ",
                 nrow(MortCast::RhoMales), " age categories.")
         nage <- nrow(MortCast::RhoMales)
         for(sex in names(e0)) mx0[[sex]] <- mx0[[sex]][1:nage]
     }
-    rho.male <- .find.pmd.rho(MortCast::RhoMales, e0$male, nage, npred, interp.rho = interp.rho)
-    rho.female <- .find.pmd.rho(MortCast::RhoFemales, e0$female, nage, npred, interp.rho = interp.rho)
+    rho.male <- .find.pmd.rho(MortCast::RhoMales, e0$male, nage, npred, nx = nx, interp.rho = interp.rho)
+    rho.female <- .find.pmd.rho(MortCast::RhoFemales, e0$female, nage, npred, nx = nx, interp.rho = interp.rho)
     rho <- (rho.male + rho.female)/2
-    res <- .do.copmd(e0, mx0, rho = rho, npred = npred, ...)
+    res <- .do.copmd(e0, mx0, rho = rho, npred = npred, nx = nx, ...)
 
     if(keep.rho) {
         res$male$rho.sex <- rho.male
@@ -255,7 +278,7 @@ copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ..
 #' @seealso \code{\link{mortcast}}, \code{\link{mortcast.blend}}, \code{\link{pmd}}, \code{\link{MLTlookup}}
 #' 
 #' @references 
-#' \url{https://population.un.org/wpp/Download/Other/MLT}
+#' \url{https://www.un.org/development/desa/pd/data/extended-model-life-tables}
 #' 
 #' Coale, A., P. Demeny, and B. Vaughn. 1983. Regional model life tables and stable 
 #' populations. 2nd ed. New York: Academic Press.
@@ -269,9 +292,17 @@ copmd <- function(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ..
 #' mx <- mlt(e0f, sex = "female", type = "CD_North")
 #' # plot first projection in black and the remaining ones in grey 
 #' plot(mx[,1], type = "l", log = "y", ylim = range(mx),
-#'     ylab = "female mx", xlab = "Age", main = country)
+#'     ylab = "female mx", xlab = "Age", 
+#'     main = paste(country, "5-year age groups"))
 #' for(i in 2:ncol(mx)) lines(mx[,i], col = "grey")
 #' 
+#' # MLT for 1-year age groups
+#' mx1y <- mlt(e0f, sex = "female", type = "CD_North", nx = 1)
+#' plot(mx1y[,1], type = "l", log = "y", ylim = range(mx1y),
+#'     ylab = "female mx", xlab = "Age", 
+#'     main = paste(country, "1-year age groups"))
+#' for(i in 2:ncol(mx1y)) lines(mx1y[,i], col = "grey")
+#'     
 #' @rdname mltgroup
 
 mlt <- function(e0, sex = c("male", "female"), type = "CD_West", nx = 5) {

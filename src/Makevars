@@ -1,0 +1,3 @@
+CC = gcc -std=gnu99 -fsanitize=address,undefined -fno-omit-frame-pointer
+F77 = gfortran -fsanitize=address
+FC = gfortran -fsanitize=address

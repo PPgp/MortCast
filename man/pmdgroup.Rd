@@ -9,13 +9,14 @@ pmd(
   e0,
   mx0,
   sex = c("male", "female"),
+  nx = 5,
   interp.rho = FALSE,
   kranges = c(0, 25),
   keep.lt = FALSE,
   keep.rho = FALSE
 )
 
-copmd(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ...)
+copmd(e0m, e0f, mxm0, mxf0, nx = 5, interp.rho = FALSE, keep.rho = FALSE, ...)
 }
 \arguments{
 \item{e0}{A vector of target life expectancy, one element for each predicted time point.}
@@ -23,6 +24,8 @@ copmd(e0m, e0f, mxm0, mxf0, interp.rho = FALSE, keep.rho = FALSE, ...)
 \item{mx0}{A vector with starting age-specific mortality rates.}
 
 \item{sex}{Either "male" or "female".}
+
+\item{nx}{Size of age groups. Should be either 5 or 1.}
 
 \item{interp.rho}{Logical controlling if the \eqn{\rho} coefficients should be interpolated 
 (\code{TRUE}) or if the raw (binned) version should be used (\code{FALSE}), as stored in 

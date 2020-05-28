@@ -1,4 +1,8 @@
-2.2-0 (05/01/2020)
+2.3-0 (05/28/2020)
+-----
+The MLT and PMD methods work now with mx defined for 1-year age groups.
+
+2.2-0/1 (05/01/2020)
 -----
 mortcast() works now with mx defined for 1-year age groups.
 

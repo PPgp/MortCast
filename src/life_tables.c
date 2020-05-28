@@ -422,18 +422,23 @@ void LC(int *Npred, int *Sex, int *Nage, int *Nx, double *ax, double *bx,
  * Produces a projection of age-specific mortality rates
  * 
  *****************************************************************************/
-void PMD(int *Npred, int *Sex, int *Nage, int *nx, double *mx0, double *rho, 
+void PMD(int *Npred, int *Sex, int *Nage, int *Nx, double *mx0, double *rho, 
         double *Eop, double *Kl, double *Ku, double *Constr, int *Nconstr,
         int *ConstrIfNeeded, double *FMx, double *SRini,
         double *LLm, double *Sr, double *lx, double *Mx) {
-    double eop, sx[*Nage-1], Lm[*Nage-1], mxm[*Nage], fmx[*Nage], lm[*Nage], locrho[*Nage], locmx[*Nage], constr[*Nage], sr0[*Nage], sr1[*Nage];
-    int i, sex, npred, pred, nage, nagem1, nconstr;
+    double eop, mxm[*Nage], fmx[*Nage], locrho[*Nage], locmx[*Nage], constr[*Nage], sr0[*Nage], sr1[*Nage];
+    int i, sex, npred, pred, nage, nagem1, nconstr, nx;
     
     npred = *Npred;
     sex=*Sex;
     nage=*Nage;
-    nagem1 = nage-1;
     nconstr = *Nconstr;
+    nx = *Nx;
+    
+    if(nx == 1) nagem1 = nage;
+    else nagem1 = nage-1;
+    
+    double sx[nagem1], Lm[nagem1], lm[nagem1];
     
     for (i=0; i < nage; ++i) {
         locmx[i] = log(mx0[i]);
@@ -481,21 +486,20 @@ void PMD(int *Npred, int *Sex, int *Nage, int *nx, double *mx0, double *rho,
 
         
         /*Rprintf("\n%i: eop=%lf", pred, eop);*/
-        LCEoKtC(sex, nage, *nx, locmx, locrho, eop, Kl[0], Ku[0], constr, Lm, lm, mxm);		
-        get_sx(Lm, sx, nagem1, nagem1, *nx);
+        LCEoKtC(sex, nage, nx, locmx, locrho, eop, Kl[0], Ku[0], constr, Lm, lm, mxm);		
+        get_sx(Lm, sx, nagem1, nagem1, nx);
         
         for (i=0; i < nagem1; ++i) {
-            Sr[i + pred*(nagem1)] = sx[i];
+            Sr[i + pred*nagem1] = sx[i];
             /*Rprintf("\nLLm=%lf, Sr=%lf", LLm[i], Sr[i + pred*27]);*/
             Mx[i + pred*nage] = mxm[i];
-            lx[i + pred*nage] = lm[i];
+            lx[i + pred*nagem1] = lm[i];
+            LLm[i + pred*nagem1] = Lm[i];
             locmx[i] = log(mxm[i]);
         }
-        Mx[nagem1 + pred*nage] = mxm[nagem1];
-        lx[nagem1 + pred*nage] = lm[nagem1];
-        locmx[nagem1] = log(mxm[nagem1]);
-        for (i=0; i < nage-2; ++i) {
-            LLm[i + pred*(nagem1)] = Lm[i];
+        if(nx > 1) {
+            Mx[nagem1 + pred*nage] = mxm[nagem1]; /* for nx=5, mx has one age group more than the rest */
+            locmx[nagem1] = log(mxm[nagem1]);
         }
         if(*ConstrIfNeeded > 0){
             for (i=0; i < nage; ++i) {
