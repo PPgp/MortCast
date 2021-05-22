@@ -38,6 +38,7 @@
 #' 
 leecarter.estimate <- function(mx, ax.index = NULL, ax.smooth = FALSE, 
                                bx.postprocess = TRUE, nx = 5) {
+    if(length(dim(mx)) < 2 || ncol(mx) < 2) stop("mx must be a matrix (age x time) of at least two columns.")
     lmx <- log(mx)
     if(length(dim(lmx))==0)
         lmx <- as.matrix(lmx)
@@ -241,6 +242,7 @@ ultimate.bx <- function(bx) {
 #' @param constrain.all.ages By default the method constrains the male mortality to be above female 
 #'     mortality for old ages if the male life expectancy is below the female life expectancy. Setting 
 #'     this argument to \code{TRUE} causes this constraint to be applied to all ages.
+#' @param \dots Additional life table arguments.
 #' @return List with elements \code{female} and \code{male}, each of which contains a matrix \code{mx}
 #'     with the predicted mortality rates. If \code{keep.lt} is \code{TRUE}, it also 
 #'     contains matrices \code{sr} (survival rates), and life table quantities \code{Lx} and \code{lx}.
@@ -297,7 +299,9 @@ ultimate.bx <- function(bx) {
 #' 
 
 mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE, 
-                      constrain.all.ages = FALSE) {
+                      constrain.all.ages = FALSE, ...) {
+    get.a0rule <- function(a0rule = c("ak", "cd"), ...)
+        list(ak = 1, cd = 2)[[match.arg(a0rule)]]
     # if e0 is a data.frame, convert to vector (it would not drop dimension without as.matrix)
     if(length(dim(e0m)) > 0) e0m <- drop(as.matrix(e0m)) 
     if(length(dim(e0f)) > 0) e0f <- drop(as.matrix(e0f)) 
@@ -313,6 +317,7 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
         resnage <-  nage # all ages
         age.groups <- lc.pars$ages
     }
+    a0cat <- get.a0rule(...)
     zeromatsr <- matrix(0, nrow=resnage, ncol=npred)
     zeromatmx <- matrix(0, nrow=nage, ncol=npred)
     # in an abridged case, lx, Lx and sr will be returned for 5-year intervals
@@ -339,7 +344,7 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
                   Kl=as.numeric(kranges[[sex]]$kl), Ku=as.numeric(kranges[[sex]]$ku), 
                   # 1 for constraining old ages only; 2 for constraining all ages
                   constrain=as.integer((sex == "male") * ((sex == "male") + (constrain.all.ages == TRUE))), 
-                  FMx=as.numeric(result$female$mx), FEop=as.numeric(e0$female),
+                  FMx=as.numeric(result$female$mx), FEop=as.numeric(e0$female), a0rule = as.integer(a0cat),
                   LLm = as.numeric(result[[sex]]$Lx), Sr=as.numeric(result[[sex]]$sr), 
                   lx=as.numeric(result[[sex]]$lx), Mx=as.numeric(result[[sex]]$mx))
         result[[sex]]$mx <- matrix(LCres$Mx, nrow=nage, 

@@ -21,7 +21,7 @@ double sum(double *x, int dim) {
  * on mx(0,1) insted of qx(0,1)
  * Source from Preston et al. 2001, p.48
  *****************************************************************************/
-double * get_a05(double mx0, int sex) {
+double * get_a05_cd(double mx0, int sex) {
 	static double ax[2];
 	if(sex == 2) {/* female*/
 		if (mx0 < 0.107) {
@@ -53,6 +53,59 @@ double * get_a05(double mx0, int sex) {
 	return(ax);
 }
 
+double get_a0_ak_female(double mx0){
+    if (mx0 < 0.01724) {return(0.14903 - 2.05527 * mx0);}
+    if (mx0 < 0.06891) {return(0.04667 + 3.88089 * mx0);}
+    return(0.31411);
+}
+
+double get_a0_ak_male(double mx0){
+    if (mx0 < 0.0230) {return(0.14929 - 1.99545 * mx0);}
+    if (mx0 < 0.08307) {return(0.02832 + 3.26021 * mx0);}
+    return(0.29915);
+}
+
+/*****************************************************************************
+ * Function returns the years lived by those who died in the age interval (ax)
+ * for ages 0 and 1-4 (abridged life table)
+ * based on mx(0,1) and sex
+ * using the Andreev-Kingkade method (Demographic Research 2015)
+ *****************************************************************************/
+double * get_a05_ak(double mx0, int sex) {
+    static double ax[2];
+    double *ax_cd, sr, af, am;
+
+    ax_cd = get_a05_cd(mx0, sex); /* for ages 1-4 */ 
+    if(sex == 2) {/* female*/
+        ax[0] = get_a0_ak_female(mx0);
+    } else { 
+        if(sex == 1) { /* male */
+            ax[0] = get_a0_ak_male(mx0);
+        } else { /* total */
+            af = get_a0_ak_female(mx0);
+            am = get_a0_ak_male(mx0);
+            sr =   1.05 / (1 + 1.05);
+            ax[0] = sr * am + (1-sr) * af;
+        }
+    }
+    ax[1] = ax_cd[1];    /*4a1*/
+    return(ax);
+}
+
+/*****************************************************************************
+ * Function returns the years lived by those who died in the age interval (ax)
+ * for ages 0 and 1-4 (abridged life table)
+ * based on mx(0,1) and sex using 
+ * either the Andreev-Kingkade (a0rule = 1) or Coale-Demeny (a0rule = 2) method
+ *****************************************************************************/
+double * get_a05(int a0rule, double mx0, int sex) {
+    if(a0rule == 1) {
+        return(get_a05_ak(mx0, sex));
+    } else {
+        return(get_a05_cd(mx0, sex));
+    }
+}
+
 /*****************************************************************************
  * Function calculates an abridged life table from age-specific mortality 
  * rates
@@ -66,7 +119,7 @@ double * get_a05(double mx0, int sex) {
  * Lx Person years lived
  * ax proportion of years lived by those who died
  *****************************************************************************/
-void doLifeTable(int sex, int nage, double *mx, 
+void doLifeTable(int sex, int nage, double *mx, int a0rule,
 				double *Lx, double *lx, double *qx, double *ax) {
 	
 	int i;
@@ -75,7 +128,7 @@ void doLifeTable(int sex, int nage, double *mx,
 	int nage1;
 	nage1 = nage -1;
 
-	tmpa = get_a05(mx[0], sex);
+	tmpa = get_a05(a0rule, mx[0], sex);
 	ax[0] = tmpa[0];
 	ax[1] = tmpa[1];
 	qx[0] = mx[0] / (1 + (1 - ax[0]) * mx[0]);                    /* 1q0 */	
@@ -134,7 +187,7 @@ void doLifeTable(int sex, int nage, double *mx,
  * Function calculates a life table for one-year age groups 
  * from age-specific mortality 
  *****************************************************************************/
-void doLifeTable1y(int sex, int nage, double *mx, 
+void doLifeTable1y(int sex, int nage, double *mx, int a0rule, 
                  double *Lx, double *lx, double *qx, double *ax) {
     
     int i;
@@ -142,7 +195,8 @@ void doLifeTable1y(int sex, int nage, double *mx,
     double *tmpa; /* pointer to estimated ax[0] and ax[1] values */
     int nage1;
     nage1 = nage -1;
-    tmpa = get_a05(mx[0], sex); 
+    
+    tmpa = get_a05(a0rule, mx[0], sex);
     ax[0] = tmpa[0]; /* use only ax[0] */
     for(i = 1; i < nage; ++i) {
         /* k = 0.5 * log(fmax(mx[i+1] / fmax(mx[i-1], DBL_MIN), DBL_MIN));*/
@@ -198,25 +252,28 @@ void LTextraColumns(int nx, int nage, double *lx, double *Lx,
         /* middle age groups  */
         for(i = 2; i < nage-1; ++i) 
             sx[i] = Lx[i+1] / Lx[i];
+        /* last two age groups */
+        sx[nage-1] = Lx[nage] / (Lx[nage-1]+Lx[nage]);
+        sx[nage]= 0.0;
     } else {
+        /* first age group */
         sx[0] = Lx[0] / nx*lx[0];
         /* middle age groups  */
-        for(i = 1; i < nage-1; ++i) 
+        for(i = 1; i < nage; ++i) 
             sx[i] = Lx[i] / Lx[i-1];
+        /* last age group */
+        sx[nage] = Lx[nage] / (Lx[nage-1]+Lx[nage]);
     }
-    /* last but one age group */
-    sx[nage-1] = Lx[nage] / (Lx[nage-1]+Lx[nage]);
-    sx[nage]= 0.0;
 }
 
 /*****************************************************************************
  * Wrapper for abridged life table function
  *****************************************************************************/
 
-void LifeTableAbridged(int *sex, int *nage, double *mx, 
+void LifeTableAbridged(int *sex, int *nage, double *mx, int *a0rule,
                double *Lx, double *lx, double *qx, double *ax, double *Tx, double *sx, double *dx) {
 
-    doLifeTable(*sex, *nage, mx, Lx, lx, qx, ax);
+    doLifeTable(*sex, *nage, mx, *a0rule, Lx, lx, qx, ax);
     LTextraColumns(5, *nage, lx, Lx, dx, Tx, sx);
 }
 
@@ -224,26 +281,26 @@ void LifeTableAbridged(int *sex, int *nage, double *mx,
  * Wrapper for 1-year-age-groups life table function
  *****************************************************************************/
 
-void LifeTable(int *sex, int *nage, double *mx, 
+void LifeTable(int *sex, int *nage, double *mx, int *a0rule,
                        double *Lx, double *lx, double *qx, double *ax, double *Tx, double *sx, double *dx) {
 
-    doLifeTable1y(*sex, *nage, mx, Lx, lx, qx, ax);
+    doLifeTable1y(*sex, *nage, mx, *a0rule, Lx, lx, qx, ax);
     LTextraColumns(1, *nage, lx, Lx, dx, Tx, sx);
 }
 
 /* Wrapper around doLifeTable1y 
  * Used when qx and ax is not needed.
  */
-void LifeTable1yC(int sex, int nage, double *mx,
+void LifeTable1yC(int sex, int nage, double *mx, int a0rule,
                 double *Lx, double *lx) {
     double qx[nage], ax[nage];
-    doLifeTable1y(sex, nage-1, mx, Lx, lx, qx, ax);
+    doLifeTable1y(sex, nage-1, mx, a0rule, Lx, lx, qx, ax);
 }
 
 
 /* Function returns collapsed Lx and lx columns of life table */
 /* function calls doLifeTable first, then collapsesLx and lx  */
-void LifeTableC(int sex, int nage, double *mx,
+void LifeTableC(int sex, int nage, double *mx, int a0rule,
                 double *Lxx, double *lxx) {
   /* life table variables returned from doLifeTable */
   /* need to be declared with nage+1 elements       */
@@ -260,7 +317,7 @@ void LifeTableC(int sex, int nage, double *mx,
   int i;
   
   /* do life table called with nage as last index */
-  doLifeTable(sex, nage, mx, Lx, lx, qx, ax);
+  doLifeTable(sex, nage, mx, a0rule, Lx, lx, qx, ax);
   /* collapse 1L0 and 4L1 into 5L0 */
   Lxx[0] = Lx[0] + Lx[1];
   lxx[0] = lx[0];
@@ -278,15 +335,15 @@ double get_constrained_mortality(double a, double b, double k, double constraint
 	return mx;
 }
 
-void LTforLC(int sex, int nage, int nx, double *mx,
+void LTforLC(int sex, int nage, int nx, double *mx, int a0rule,
                   double *Lx, double *lx) {
-    if(nx == 1)LifeTable1yC(sex, nage, mx, Lx, lx);
-    else LifeTableC(sex, nage, mx, Lx, lx);
+    if(nx == 1)LifeTable1yC(sex, nage, mx, a0rule, Lx, lx);
+    else LifeTableC(sex, nage, mx, a0rule, Lx, lx);
 }
     
 
 void LCEoKtC(int sex, int nage, int nx, double *ax, double *bx, 
-			 double eop, double kl, double ku, double *constraints, 
+			 double eop, double kl, double ku, double *constraints, int a0rule,
 			 double *LLm, double *lm, double *Mx) {
 	double mxm[nage], LTeo, k2;
 	int i, dim;
@@ -299,7 +356,7 @@ void LCEoKtC(int sex, int nage, int nx, double *ax, double *bx,
 		mxm[i] = get_constrained_mortality(ax[i], bx[i], kl, constraints[i]);
 	    /*Rprintf("\ni: %i, mx=%f, ax=%f, bx=%f, k=%f, constr=%f", i, mxm[i], ax[i], bx[i], kl, constraints[i]);*/
 	}
-	LTforLC(sex, dim, nx, mxm, LTl, lm);
+	LTforLC(sex, dim, nx, mxm, a0rule, LTl, lm);
 
 	if(eop < sum(LTl, dim)) {
 		for (i=0; i < dim; ++i) LLm[i]=LTl[i];
@@ -311,7 +368,7 @@ void LCEoKtC(int sex, int nage, int nx, double *ax, double *bx,
 		mxm[i] = get_constrained_mortality(ax[i], bx[i], ku, constraints[i]);
 	}
 	
-	LTforLC(sex, dim, nx, mxm, LTu, lm);
+	LTforLC(sex, dim, nx, mxm, a0rule, LTu, lm);
 
 	if(eop > sum(LTu, dim)) {
 		for (i=0; i < dim; ++i) LLm[i]=LTu[i]; 
@@ -323,7 +380,7 @@ void LCEoKtC(int sex, int nage, int nx, double *ax, double *bx,
 	for (i=0; i < nage; ++i) {
 		mxm[i] = get_constrained_mortality(ax[i], bx[i], k2, constraints[i]);
 	}
-	LTforLC(sex, dim, nx, mxm, LLm, lm);
+	LTforLC(sex, dim, nx, mxm, a0rule, LLm, lm);
 	LTeo = sum(LLm, dim);
 	while(fabs(LTeo - eop) > 0.01) {
 		if(LTeo < eop) kl = k2;
@@ -332,7 +389,7 @@ void LCEoKtC(int sex, int nage, int nx, double *ax, double *bx,
 		for (i=0; i < nage; ++i) {
 			mxm[i] = get_constrained_mortality(ax[i], bx[i], k2, constraints[i]);
 		}
-		LTforLC(sex, dim, nx, mxm, LLm, lm);
+		LTforLC(sex, dim, nx, mxm, a0rule, LLm, lm);
 		LTeo = sum(LLm, dim);
 	}
 	for (i=0; i < nage; ++i) Mx[i] = mxm[i];
@@ -368,7 +425,7 @@ void get_sx(double *LLm, double *sx, int n, int Ldim, int nx) {
  *****************************************************************************/
 
 void LC(int *Npred, int *Sex, int *Nage, int *Nx, double *ax, double *bx, 
-		double *Eop, double *Kl, double *Ku, int *constrain, double *FMx, double *FEop, 
+		double *Eop, double *Kl, double *Ku, int *constrain, double *FMx, double *FEop, int *a0rule,
 		double *LLm, double *Sr, double *lx, double *Mx) {
 	double eop, mxm[*Nage], fmx[*Nage], locbx[*Nage], locax[*Nage];
 	int i, sex, npred, pred, nage, nagem1, cage, nx;
@@ -404,7 +461,7 @@ void LC(int *Npred, int *Sex, int *Nage, int *Nx, double *ax, double *bx,
 			locax[i] = ax[i + pred*nage];
 		}
 
-		LCEoKtC(sex, nage, nx, locax, locbx, eop, Kl[pred], Ku[pred], fmx, Lm, lm, mxm);		
+		LCEoKtC(sex, nage, nx, locax, locbx, eop, Kl[pred], Ku[pred], fmx, *a0rule, Lm, lm, mxm);		
 		get_sx(Lm, sx, nagem1, nagem1, nx);
 		
 		for (i=0; i < nagem1; ++i) {
@@ -423,8 +480,8 @@ void LC(int *Npred, int *Sex, int *Nage, int *Nx, double *ax, double *bx,
  * 
  *****************************************************************************/
 void PMD(int *Npred, int *Sex, int *Nage, int *Nx, double *mx0, double *rho, 
-        double *Eop, double *Kl, double *Ku, double *Constr, int *Nconstr,
-        int *ConstrIfNeeded, double *FMx, double *SRini,
+        double *Eop, double *Kl, double *Ku, double *Constr, int *Nconstr, 
+        int *ConstrIfNeeded, double *FMx, double *SRini, int *a0rule,
         double *LLm, double *Sr, double *lx, double *Mx) {
     double eop, mxm[*Nage], fmx[*Nage], locrho[*Nage], locmx[*Nage], constr[*Nage], sr0[*Nage], sr1[*Nage];
     int i, sex, npred, pred, nage, nagem1, nconstr, nx;
@@ -486,7 +543,7 @@ void PMD(int *Npred, int *Sex, int *Nage, int *Nx, double *mx0, double *rho,
 
         
         /*Rprintf("\n%i: eop=%lf", pred, eop);*/
-        LCEoKtC(sex, nage, nx, locmx, locrho, eop, Kl[0], Ku[0], constr, Lm, lm, mxm);		
+        LCEoKtC(sex, nage, nx, locmx, locrho, eop, Kl[0], Ku[0], constr, *a0rule, Lm, lm, mxm);		
         get_sx(Lm, sx, nagem1, nagem1, nx);
         
         for (i=0; i < nagem1; ++i) {
@@ -515,7 +572,7 @@ void PMD(int *Npred, int *Sex, int *Nage, int *Nx, double *mx0, double *rho,
  * 
  */
 void get_lquad_mortality(double *ax, double *bx, double *cx, double *vx, 
-                           double q5, double k, int sex, int nage, double *mx) {
+                           double q5, double k, int sex, int nage, int a0rule, double *mx) {
     double h, q1, q4;
     int i;
     double *a04; /* pointer to estimated ax[0] and ax[1] values */
@@ -526,7 +583,7 @@ void get_lquad_mortality(double *ax, double *bx, double *cx, double *vx,
         mx[i] = exp(ax[i] + bx[i]*h + cx[i]*h*h + vx[i]*k);
     }
     /* Force 4q1 (and thus 4m1) to be consistent with 1q0 and 5q0 */
-    a04 = get_a05(mx[0], sex);
+    a04 = get_a05(a0rule, mx[0], sex);
     q1 = mx[0] / ( 1 + (1-a04[0])*mx[0] );
     q4 = 1 - (1-q5)/(1-q1);
     mx[1] = q4 / ( 4 - (4-a04[1])*q4 );
@@ -535,7 +592,7 @@ void get_lquad_mortality(double *ax, double *bx, double *cx, double *vx,
 void doLQuad(int sex, int nage, 
              double *ax, double *bx, double *cx, double *vx, 
              double eop, double k, 
-             double q5l, double q5u, 
+             double q5l, double q5u, int a0rule, 
              double *LLm, double *lm, double *Mx) {
     double LTl[27], LTu[nage-1], mxm[nage], LTeo, q5t;
     int i, dim;
@@ -543,8 +600,8 @@ void doLQuad(int sex, int nage,
 
     /* check if the eop lies outside of the bounds */
     /* lower bound */
-    get_lquad_mortality(ax, bx, cx, vx, q5l, k, sex, nage, mxm);
-    LifeTableC(sex, dim, mxm, LTl, lm);
+    get_lquad_mortality(ax, bx, cx, vx, q5l, k, sex, nage, a0rule, mxm);
+    LifeTableC(sex, dim, mxm, a0rule, LTl, lm);
     /*Rprintf("\nq5 = %lf, sum = %lf", q5l, sum(LTl, dim));*/
     if(eop > sum(LTl, dim)) {
         for (i=0; i < dim; ++i) LLm[i]=LTl[i];
@@ -552,8 +609,8 @@ void doLQuad(int sex, int nage,
         return;
     }
     /* upper bound */
-    get_lquad_mortality(ax, bx, cx, vx, q5u, k, sex, nage, mxm);
-    LifeTableC(sex, dim, mxm, LTu, lm);
+    get_lquad_mortality(ax, bx, cx, vx, q5u, k, sex, nage, a0rule, mxm);
+    LifeTableC(sex, dim, mxm, a0rule, LTu, lm);
     /*Rprintf("\nq5 = %lf, sum = %lf", q5u, sum(LTu, dim));*/
     if(eop < sum(LTu, dim)) {
         for (i=0; i < dim; ++i) LLm[i]=LTu[i]; 
@@ -563,15 +620,15 @@ void doLQuad(int sex, int nage,
     
     /* Bi-section method */
     q5t = 0.5 * (q5l + q5u);
-    get_lquad_mortality(ax, bx, cx, vx, q5t, k, sex, nage, mxm);
-    LifeTableC(sex, dim, mxm, LLm, lm);
+    get_lquad_mortality(ax, bx, cx, vx, q5t, k, sex, nage, a0rule, mxm);
+    LifeTableC(sex, dim, mxm, a0rule, LLm, lm);
     LTeo = sum(LLm, dim);
     while(fabs(LTeo - eop) > 0.01) {
         if(LTeo > eop) q5l = q5t;
         else q5u = q5t;
         q5t = 0.5 * (q5l + q5u);
-        get_lquad_mortality(ax, bx, cx, vx, q5t, k, sex, nage, mxm);
-        LifeTableC(sex, dim, mxm, LLm, lm);
+        get_lquad_mortality(ax, bx, cx, vx, q5t, k, sex, nage, a0rule, mxm);
+        LifeTableC(sex, dim, mxm, a0rule, LLm, lm);
         LTeo = sum(LLm, dim);
         /*Rprintf("\nq5 = %lf, sum = %lf", q5u, LTeo);*/
     }
@@ -586,7 +643,7 @@ void doLQuad(int sex, int nage,
  *****************************************************************************/
 void LQuad(int *Npred, int *Sex, int *Nage, double *Eop, 
            double *ax, double *bx, double *cx, double *vx, 
-           double *Q5l, double *Q5u, double *K,
+           double *Q5l, double *Q5u, double *K, int *a0rule,
            double *LLm, double *Sr, double *lx, double *Mx) {
     double eop, sx[*Nage-1], Lm[*Nage-1], mxm[*Nage], lm[*Nage];
     int i, sex, npred, pred, nage, nagem1, nx;
@@ -600,7 +657,7 @@ void LQuad(int *Npred, int *Sex, int *Nage, double *Eop,
     for (pred=0; pred < npred; ++pred) {
         eop = Eop[pred];
         doLQuad(sex, nage, ax, bx, cx, vx, eop, K[0],
-                Q5l[0], Q5u[0], Lm, lm, mxm);
+                Q5l[0], Q5u[0], *a0rule, Lm, lm, mxm);
         get_sx(Lm, sx, nagem1, nagem1, nx);
         
         for (i=0; i < nagem1; ++i) {

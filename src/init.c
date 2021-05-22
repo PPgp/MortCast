@@ -6,18 +6,18 @@
 */
 
 /* .C calls */
-extern void LC(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
-extern void PMD(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
-extern void LQuad(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
-extern void LifeTable(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
-extern void LifeTableAbridged(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
+extern void LC(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
+extern void PMD(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
+extern void LQuad(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
+extern void LifeTable(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
+extern void LifeTableAbridged(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
 
 static const R_CMethodDef CEntries[] = {
-    {"LC", (DL_FUNC) &LC, 16},
-    {"PMD", (DL_FUNC) &PMD, 18},
-    {"LQuad", (DL_FUNC) &LQuad, 15},
-    {"LifeTable", (DL_FUNC) &LifeTable, 10},
-    {"LifeTableAbridged", (DL_FUNC) &LifeTableAbridged, 10},
+    {"LC", (DL_FUNC) &LC, 17},
+    {"PMD", (DL_FUNC) &PMD, 19},
+    {"LQuad", (DL_FUNC) &LQuad, 16},
+    {"LifeTable", (DL_FUNC) &LifeTable, 11},
+    {"LifeTableAbridged", (DL_FUNC) &LifeTableAbridged, 11},
     {NULL, NULL, 0}
 };
 

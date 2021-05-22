@@ -9,6 +9,8 @@
 #' @param abridged Is it an abridged life table (\code{TRUE}, default) or not (\code{FALSE}). 
 #'    In the former case, the \code{mx} vector is interpreted as corresponding to age groups 0, 1-4, 5-9, 10-14, \dots.
 #'    If \code{FALSE}, the \code{mx} vector is interpreted as corresponding to one-year age groups, i.e. 0, 1, 2, 3, \dots.
+#' @param a0rule Rule for approximation of a0. "ak" (default) uses the Andreev-Kingkade method (DR 2015), "cd" uses the 
+#'    Coale-Demeany method.  
 #' @param radix Base of the life table.
 #' @param open.age Open age group. If smaller than the last age group of \code{mx}, the life table is truncated. 
 #'    It does not have any effect if larger than the last age group.
@@ -39,11 +41,12 @@
 #' mxf <- subset(mxF, name == country)[,"2010-2015"]
 #' life.table(mxf, sex = "female")
 #' 
-life.table <- function(mx, sex = c("male", "female", "total"), abridged = TRUE, radix = 1, open.age = 130){
+life.table <- function(mx, sex = c("male", "female", "total"), abridged = TRUE, a0rule = c("ak", "cd"), 
+                       radix = 1, open.age = 130){
     # If abridged is TRUE, the first two elements of mx must correspond to 0-1 and 1-4. 
-    # If include01 is FALSE, the first two age groups of the results are collapsed to 0-5
     sex <- match.arg(sex)
     sex <- list(male=1, female=2, total=3)[[sex]]
+    a0cat <- list(ak = 1, cd = 2)[[match.arg(a0rule)]]
     if(abridged) {
         ages <- c(0, 1, seq(5, length = length(mx)-2, by = 5))
         LTfct <- "LifeTableAbridged"
@@ -64,7 +67,7 @@ life.table <- function(mx, sex = c("male", "female", "total"), abridged = TRUE, 
         return(data.frame(age=resage, mx=mx[1:nresage], qx=nas, lx=nas, dx=nas, Lx=nas, 
                           sx=nas, Tx=nas, ex=nas, ax=nas))
     
-    LTC <- do.call(".C", list(LTfct, as.integer(sex), as.integer(nagem1), as.numeric(mx), 
+    LTC <- do.call(".C", list(LTfct, as.integer(sex), as.integer(nagem1), as.numeric(mx), as.integer(a0cat),
               Lx=Lx, lx=lx, qx=qx, ax=ax, Tx=Tx, sx=sx, dx=dx, PACKAGE = "MortCast"))
     LT <- data.frame(age=as.integer(ages), mx=mx, qx=LTC$qx, lx=LTC$lx, dx=LTC$dx, Lx=LTC$Lx,  sx=LTC$sx, Tx=LTC$Tx, 
                      ex=LTC$Tx/LTC$lx, ax=LTC$ax)

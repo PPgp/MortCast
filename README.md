@@ -1,6 +1,6 @@
 # R package MortCast
 
-[![Travis-CI Build Status](https://travis-ci.org/PPgp/MortCast.svg?branch=master)](https://travis-ci.org/PPgp/MortCast)
+[![Travis-CI Build Status](https://github.com/PPgp/MortCast/workflows/R-CMD-check/badge.svg?branch=master)](https://github.com/PPgp/MortCast/actions?workflow=R-CMD-check)
 
 ### Estimation and Projection of Age-Specific Mortality Rates
 

@@ -61,7 +61,7 @@
 #' @rdname pmdgroup
 
 pmd <- function(e0, mx0, sex = c("male", "female"), nx = 5, interp.rho = FALSE,
-                kranges = c(0, 25), keep.lt = FALSE, keep.rho = FALSE) {
+                kranges = c(0, 25), keep.lt = FALSE, keep.rho = FALSE, ...) {
     sex <- match.arg(sex)
     if(length(dim(e0)) > 0) e0 <- drop(as.matrix(e0)) # if it's a data.frame, it would not drop dimension without as.matrix
     if(length(dim(mx0)) > 0) mx0 <- drop(as.matrix(mx0)) 
@@ -75,7 +75,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), nx = 5, interp.rho = FALSE,
     e0l <- list(e0)
     names(mx0l) <- names(e0l) <- sex
     res <- .do.copmd(e0l, mx0l, rho = rho, npred = npred, nx = nx, kranges = kranges,
-                     keep.lt = keep.lt)
+                     keep.lt = keep.lt, ...)
     if(keep.rho)
         res[[sex]]$rho <- rho
     return(res[[sex]])
@@ -117,7 +117,8 @@ pmd <- function(e0, mx0, sex = c("male", "female"), nx = 5, interp.rho = FALSE,
 }
 
 .do.copmd <- function(e0l, mx0l, rho, npred, nx = 5, kranges = c(0, 25), keep.lt = FALSE, 
-                      sexratio.adjust = FALSE, adjust.sr.if.needed = FALSE, adjust.with.mxf = FALSE) {
+                      sexratio.adjust = FALSE, adjust.sr.if.needed = FALSE, 
+                      adjust.with.mxf = FALSE, a0rule = c("ak", "cd")) {
     # e0l and mx0l should be named lists of e0 and mx0 arrays with names being male and/or female. 
     # PMD is performed on all elements of the list using the same rho
     sexes <- c("female", "male")
@@ -135,6 +136,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), nx = 5, interp.rho = FALSE,
         resnage <-  nage # all ages
         age.groups <- default.ages
     }
+    a0cat <- list(ak = 1, cd = 2)[[match.arg(a0rule)]]
     # initialize results
     zeromatsr <- matrix(0, nrow=resnage, ncol=npred)
     zeromatmx <- matrix(0, nrow=nage, ncol=npred)
@@ -152,7 +154,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), nx = 5, interp.rho = FALSE,
                  as.numeric(mx0l[[sex]]), as.numeric(rho), as.numeric(e0l[[sex]]), 
                  Kl=as.numeric(kranges[1]), Ku=as.numeric(kranges[2]), 
                  Constr = constraint, Nconstr = as.integer(nconstr), ConstrIfNeeded = as.integer(adjust.sr.if.needed == TRUE && sex == "male"),
-                 FMx = as.numeric(result$female$mx), SRini = sex.ratio.ini,
+                 FMx = as.numeric(result$female$mx), SRini = sex.ratio.ini, a0rule = as.integer(a0cat),
                  LLm = as.numeric(result[[sex]]$Lx), Sr=as.numeric(result[[sex]]$sr), 
                  lx=as.numeric(result[[sex]]$lx), Mx=as.numeric(result[[sex]]$mx))
         ages <- names(mx0l[[sex]])
@@ -392,6 +394,7 @@ mltj <- function(e0m, e0f, ...) {
 #' @param k Value of the \eqn{k} parameter.
 #' @param keep.lt Logical. If \code{TRUE} additional life table columns are kept in the 
 #'      resulting object.
+#' @param \dots Additional life table arguments.
 #' @return Function \code{logquad} returns a list with the following elements: a matrix \code{mx}
 #'     with the predicted mortality rates. If \code{keep.lt} is \code{TRUE}, it also 
 #'     contains matrices \code{sr} (survival rates), and life table quantities \code{Lx} and \code{lx}.
@@ -419,7 +422,9 @@ mltj <- function(e0m, e0f, ...) {
 #' @rdname lqgroup
 #' @name logquad
 logquad <- function(e0, sex = c("male", "female", "total"), my.coefs = NULL,
-                    q5ranges = c(1e-4, 0.9), k = 0, keep.lt = FALSE) {
+                    q5ranges = c(1e-4, 0.9), k = 0, keep.lt = FALSE, ...) {
+    get.a0rule <- function(a0rule = c("ak", "cd"), ...)
+        list(ak = 1, cd = 2)[[match.arg(a0rule)]]
     sex <- match.arg(sex)
     sex.code <- list(male=1, female=2, total=3)[[sex]]
     if(is.null(my.coefs)) {
@@ -435,7 +440,8 @@ logquad <- function(e0, sex = c("male", "female", "total"), my.coefs = NULL,
     nage <- nrow(sex.coefs)
     npred <- length(e0)
     ages <- c(0, 1, seq(5, length = nage - 2, by = 5))
-
+    a0cat <- get.a0rule(...)
+    
     # initialize results
     zeromatsr <- matrix(0, nrow=nage-1, ncol=npred)
     zeromatmx <- matrix(0, nrow=nage, ncol=npred)
@@ -446,8 +452,8 @@ logquad <- function(e0, sex = c("male", "female", "total"), my.coefs = NULL,
                  as.numeric(sex.coefs$ax), as.numeric(sex.coefs$bx),
                  as.numeric(sex.coefs$cx), as.numeric(sex.coefs$vx),
                  Q5l=as.numeric(q5ranges[1]), Q5u=as.numeric(q5ranges[2]), 
-                 K = as.numeric(k), LLm = as.numeric(result$Lx), 
-                 Sr=as.numeric(result$sr), 
+                 K = as.numeric(k), a0rule = as.integer(a0cat),
+                 LLm = as.numeric(result$Lx), Sr=as.numeric(result$sr), 
                  lx=as.numeric(result$lx), Mx=as.numeric(result$mx))
     
     result$mx <- matrix(LQres$Mx, nrow=nage, dimnames=list(ages, names(e0)))

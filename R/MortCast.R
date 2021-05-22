@@ -2,6 +2,7 @@
 #' @import stats
 #' @import wpp2017
 #' @importFrom utils data
+#' @author Hana Sevcikova, Nan Li and Patrick Gerland
 #' @details 
 #' The package implements methodology described in Sevcikova et al. (2016) that is related to 
 #' estimating and predicting age-specific mortality rates. The main functions are:
