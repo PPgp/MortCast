@@ -95,3 +95,6 @@ Age-Specific Mortality and Fertility Rates for Probabilistic Population Projecti
 In: Schoen R. (eds) Dynamic Demographic Analysis. The Springer Series on Demographic Methods
 and Population Analysis, vol 39. Springer, Cham. \href{http://arxiv.org/abs/1503.05215}{Earlier version}.
 }
+\author{
+Hana Sevcikova, Nan Li and Patrick Gerland
+}

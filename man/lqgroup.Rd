@@ -11,7 +11,8 @@ logquad(
   my.coefs = NULL,
   q5ranges = c(1e-04, 0.9),
   k = 0,
-  keep.lt = FALSE
+  keep.lt = FALSE,
+  ...
 )
 
 logquadj(e0m, e0f, ...)
@@ -33,11 +34,11 @@ Any \code{NA}s are internally converted to zeros. If not given, the dataset \cod
 \item{keep.lt}{Logical. If \code{TRUE} additional life table columns are kept in the 
 resulting object.}
 
+\item{\dots}{Additional arguments passed to the underlying function.}
+
 \item{e0m}{A time series of target male life expectancy.}
 
 \item{e0f}{A time series of target female life expectancy.}
-
-\item{\dots}{Additional arguments passed to the underlying function.}
 }
 \value{
 Function \code{logquad} returns a list with the following elements: a matrix \code{mx}

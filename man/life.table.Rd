@@ -8,6 +8,7 @@ life.table(
   mx,
   sex = c("male", "female", "total"),
   abridged = TRUE,
+  a0rule = c("ak", "cd"),
   radix = 1,
   open.age = 130
 )
@@ -22,6 +23,9 @@ If \code{abridged} is \code{FALSE}, they correspond to 1m0, 1m1, 1m2, 1m3, \dots
 \item{abridged}{Is it an abridged life table (\code{TRUE}, default) or not (\code{FALSE}). 
 In the former case, the \code{mx} vector is interpreted as corresponding to age groups 0, 1-4, 5-9, 10-14, \dots.
 If \code{FALSE}, the \code{mx} vector is interpreted as corresponding to one-year age groups, i.e. 0, 1, 2, 3, \dots.}
+
+\item{a0rule}{Rule for approximation of a0. "ak" (default) uses the Andreev-Kingkade method (DR 2015), "cd" uses the 
+Coale-Demeany method.}
 
 \item{radix}{Base of the life table.}
 

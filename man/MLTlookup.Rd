@@ -5,7 +5,8 @@
 \alias{MLTlookup}
 \alias{MLT1Ylookup}
 \title{Model Life Tables Lookup}
-\format{Data frame with the following columns:
+\format{
+Data frame with the following columns:
 \describe{
 \item{type}{Type of the model life table. Available options are \dQuote{CD_East}, \dQuote{CD_North}, 
 \dQuote{CD_South}, \dQuote{CD_West}, \dQuote{UN_Chilean}, \dQuote{UN_Far_Eastern}, 
@@ -18,7 +19,8 @@ For the CD types, see Coale et al. (1983). For the UN types, see the link in Ref
 \item{e0}{Level of life expectancy, starting at 20 and going by steps of 2.5 up to 130.}
 \item{mx}{Mortality rates.}
 \item{lx, Lx, sx}{Other life table columns.}
-}}
+}
+}
 \usage{
 data(MLTlookup)
 data(MLT1Ylookup)

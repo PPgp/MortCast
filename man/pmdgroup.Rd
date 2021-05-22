@@ -13,7 +13,8 @@ pmd(
   interp.rho = FALSE,
   kranges = c(0, 25),
   keep.lt = FALSE,
-  keep.rho = FALSE
+  keep.rho = FALSE,
+  ...
 )
 
 copmd(e0m, e0f, mxm0, mxf0, nx = 5, interp.rho = FALSE, keep.rho = FALSE, ...)
@@ -39,14 +40,6 @@ resulting object.}
 
 \item{keep.rho}{Logical. If \code{TRUE} the \eqn{\rho} coefficients are included in the resulting object.}
 
-\item{e0m}{A time series of target male life expectancy.}
-
-\item{e0f}{A time series of target female life expectancy.}
-
-\item{mxm0}{A vector with starting age-specific male mortality rates.}
-
-\item{mxf0}{A vector with starting age-specific female mortality rates.}
-
 \item{\dots}{Additional arguments passed to the underlying function. For \code{copmd}, in addition to
 \code{kranges} and \code{keep.lt}, it can be \code{sexratio.adjust} which is 
 a logical controlling if a sex-ratio adjustment should be applied to prevent crossovers 
@@ -58,6 +51,14 @@ If the argument \code{adjust.sr.if.needed} is set to \code{TRUE}, a sex-ratio ad
 is performed dynamically, using the sex ratio in the previous time point. 
 In such a case, an adjustment in time t is applied only if there was a drop of sex ratio 
 below one at time t-1.}
+
+\item{e0m}{A time series of target male life expectancy.}
+
+\item{e0f}{A time series of target female life expectancy.}
+
+\item{mxm0}{A vector with starting age-specific male mortality rates.}
+
+\item{mxf0}{A vector with starting age-specific female mortality rates.}
 }
 \value{
 Function \code{pmd} returns a list with the following elements: a matrix \code{mx}

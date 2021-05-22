@@ -6,10 +6,12 @@
 \alias{RhoFemales}
 \alias{RhoMales}
 \title{Pattern Mortality Decline Lookup Tables}
-\format{Using \code{data(PMDrho)} loads two objects into memory: \code{RhoFemales} and
+\format{
+Using \code{data(PMDrho)} loads two objects into memory: \code{RhoFemales} and
     \code{RhoMales}. They both are data frames with 22 rows corresponding to age groups, 
     and 17 columns corresponding to different levels of life expectancy in 5-years intervals 
-    (from 50 to 135). The names of the columns reflect the middle of the respective interval.}
+    (from 50 to 135). The names of the columns reflect the middle of the respective interval.
+}
 \usage{
 data(PMDrho)
 }

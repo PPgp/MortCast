@@ -10,6 +10,6 @@ Description: Age-specific mortality rates are estimated and projected using
     Sevcikova et al. (2016) <doi:10.1007/978-3-319-26603-9_15>.
 License: GPL (>= 2)
 Depends: R (>= 3.5.0), wpp2017
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.1
 LazyLoad: True
 LazyData: True

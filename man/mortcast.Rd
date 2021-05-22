@@ -10,7 +10,8 @@ mortcast(
   lc.pars,
   rotate = TRUE,
   keep.lt = FALSE,
-  constrain.all.ages = FALSE
+  constrain.all.ages = FALSE,
+  ...
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ resulting object.}
 \item{constrain.all.ages}{By default the method constrains the male mortality to be above female 
 mortality for old ages if the male life expectancy is below the female life expectancy. Setting 
 this argument to \code{TRUE} causes this constraint to be applied to all ages.}
+
+\item{\dots}{Additional life table arguments.}
 }
 \value{
 List with elements \code{female} and \code{male}, each of which contains a matrix \code{mx}
