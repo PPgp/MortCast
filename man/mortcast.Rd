@@ -71,22 +71,19 @@ plot(lc$ages, pred$female$mx[,1], type="b", log="y", ylim=range(pred$female$mx),
 for(i in 2:ncol(pred$female$mx)) lines(lc$ages, pred$female$mx[,i], col="grey")
 
 # similarly for 1-year age groups
-# interpolate to get toy 1-year mx for estimation
-interp <- function(x)
-    approx(c(0,1, seq(5, 100, by=5)), x, xout = seq(0, 100), method = "linear")$y
-mxm1y <- apply(mxm, 2, interp)
-mxf1y <- apply(mxf, 2, interp)
-rownames(mxm1y) <- rownames(mxf1y) <- seq(0, 100)
+# derive toy 1-year mx using model life tables at given level of e0
+mxm1y <- mlt(seq(65, 71, length = 4), sex = "male", nx = 1)
+mxf1y <- mlt(seq(73, 78, length = 4), sex = "female", nx = 1)
 
 # estimate parameters
 lc1y <- lileecarter.estimate(mxm1y, mxf1y, nx = 1)
  
-# project into future 
+# project into the future 
 pred1y <- mortcast(e0m, e0f, lc1y)
 
 # plot first projection in black and the remaining ones in grey 
 plot(lc1y$ages, pred1y$female$mx[,1], type="b", log="y", ylim=range(pred1y$female$mx),
-    ylab="female mx", xlab="Age", main=paste(country, "(1-year age groups)"), cex=0.5)
+    ylab="female mx", xlab="Age", main="1-year age groups", cex=0.5)
 for(i in 2:ncol(pred1y$female$mx)) lines(lc1y$ages, pred1y$female$mx[,i], col="grey")
 
 }
