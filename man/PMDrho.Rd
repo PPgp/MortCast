@@ -35,7 +35,7 @@ legend("bottomleft", legend = e0lev, lty = 1:length(e0lev), bty= "n")
 }
 \references{
 Andreev, K. Gu, D., Gerland, P. (2013). Age Patterns of Mortality Improvement by Level of Life Expectancy at Birth with Applications to Mortality Projections. Paper presented at the Annual Meeting
-of the Population Association of America, New Orleans, LA. \url{http://paa2013.princeton.edu/papers/132554}.
+of the Population Association of America, New Orleans, LA. \url{https://paa2013.princeton.edu/papers/132554}.
 
 Gu, D., Pelletier, F. and Sawyer, C. (2017). Projecting Age-sex-specific Mortality: A Comparison of the Modified Lee-Carter and Pattern of Mortality Decline Methods, UN Population Division, 
 Technical Paper No. 6. New York: United Nations. \url{https://population.un.org/wpp/Publications/Files/WPP2017_TechnicalPaperNo6.pdf}

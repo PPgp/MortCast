@@ -20,10 +20,12 @@ By default five-years age groups are assigned to rows if rownames are not given.
 should be the same \code{mxM}.}
 
 \item{est.ages}{A vector of integers identifying the ages to be used 
-for estimation. It should be a subset of rownames of \code{mxM}.}
+for estimation. It should be a subset of rownames of \code{mxM}. Change the defaults if 
+1-year age groups are used (see Example in \code{\link{kannisto}}).}
 
 \item{proj.ages}{A vector of integers identifying the age groups for which mortality rates 
-are to be projected.}
+are to be projected. Change the defaults if 
+1-year age groups are used (see Example in \code{\link{kannisto}}).}
 }
 \value{
 A list of two vectors or matrices (for male and female) containing the input motality 

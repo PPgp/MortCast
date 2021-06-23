@@ -56,7 +56,7 @@ The LogQuad method in this implementation projects mortality rates using the equ
      (i.e. reflects child mortality), 
      and \eqn{k} should be chosen to match 45q15 (adult mortality) or set to 0 (default). The coefficients
      can be passed as inputs, or taken from the package default dataset \code{\link{LQcoef}} which 
-     are taken from \url{http://www.demog.berkeley.edu/~jrw/LogQuad}.
+     are taken from \url{https://u.demog.berkeley.edu/~jrw/LogQuad/}.
      
      For the given inputs and values of life expectancy e0, the function finds values of \eqn{h} that 
      best match e0, using life tables and the bisection method. It returns the corresponding mortality schedule

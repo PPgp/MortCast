@@ -25,7 +25,8 @@ mortcast.blend(
 \item{meth1}{Character string giving the name of the first method to blend. It is one of 
 \dQuote{lc}, \dQuote{pmd}, \dQuote{mlt} or \dQuote{logquad}, corresponding to Coherent Lee-Carter (function \code{\link{mortcast}}), 
  Pattern Mortality Decline (function \code{\link{copmd}}), Log-Quadratic model (function \code{\link{logquadj}}), and 
- Model Life Tables (function \code{\link{mltj}}), respectively.}
+ Model Life Tables (function \code{\link{mltj}}), respectively. The \dQuote{logquad} method can only be used 
+ with 5-year age groups.}
 
 \item{meth2}{Character string giving the name of the second method to blend. 
 One of the same choices as \code{meth1}.}
@@ -40,13 +41,15 @@ by \code{1 - weights}.}
 \code{min.age.groups} age categories, the coherent Kannisto method (\code{\link{cokannisto}}) 
 is applied to extend the age groups into old ages.}
 
-\item{min.age.groups}{Minimum number of age groups. Triggers the application of Kannisto, see above.}
+\item{min.age.groups}{Minimum number of age groups. Triggers the application of Kannisto, see above. 
+Change the default value if 1-year age groups are used (see Example).}
 
 \item{meth1.args}{List of arguments passed to the function that corresponds to \code{meth1}.}
 
 \item{meth2.args}{List of arguments passed to the function that corresponds to \code{meth2}.}
 
-\item{kannisto.args}{List of arguments passed to the \code{\link{cokannisto}} function if Kannisto is applied.}
+\item{kannisto.args}{List of arguments passed to the \code{\link{cokannisto}} function if Kannisto is applied. 
+If 1-year age groups are used various defaults in the Kannisto function need to be changed (see Example).}
 }
 \value{
 List with elements \code{female} and \code{male}, each of which contains a matrix \code{mx}
@@ -57,7 +60,7 @@ List with elements \code{female} and \code{male}, each of which contains a matri
 }
 \description{
 Predict age-specific mortality rates using a blend of two different methods (Coherent Lee-Carter, 
-    Coherent Pattern Mortality Decline, or Model Life Tables). Weights can be applied to fine-tune the blending mix.
+    Coherent Pattern Mortality Decline, Log-Quadratic model, or Model Life Tables). Weights can be applied to fine-tune the blending mix.
 }
 \details{
 The function allows to combine two different methods using given weights.
@@ -75,15 +78,18 @@ lcest <- lileecarter.estimate(mxm, mxf)
 # project into future
 e0f <- subset(e0Fproj, name == country)[-(1:2)]
 e0m <- subset(e0Mproj, name == country)[-(1:2)]
+
 # Blend LC and MLT
 pred1 <- mortcast.blend(e0m, e0f, meth1 = "lc", meth2 = "mlt",
     meth1.args = list(lc.pars = lcest),
     meth2.args = list(type = "CD_North"),
     weights = c(1,0.25))
+    
 # Blend PMD and MLT
 pred2 <- mortcast.blend(e0m, e0f, meth1 = "pmd", meth2 = "mlt",
     meth1.args = list(mxm0 = mxm[, "2010-2015"],
                       mxf0 = mxf[, "2010-2015"]))
+                      
 # plot projection by time
 plotmx <- function(pred, iage, main) 
     with(pred, {
@@ -101,6 +107,28 @@ age.group <- 3 # 5-9 years old
 par(mfrow=c(1,2))
 plotmx(pred1, age.group, "LC-MLT (age 5-9)")
 plotmx(pred2, age.group, "PMD-MLT (age 5-9)")
+
+# Blend LC and MLT for 1-year age groups
+#########################################
+# First interpolate e0 to get 1-year life expectancies (for first five years)
+e0m1y <- approx(as.double(e0m[,1:2]), n = 5)$y
+e0f1y <- approx(as.double(e0f[,1:2]), n = 5)$y
+# derive toy mx in order to get some LC parameters
+mxm1y <- mlt(seq(70, 72, length = 4), sex = "male", nx = 1)
+mxf1y <- mlt(seq(78, 79, length = 4), sex = "female", nx = 1)
+lcest1y <- lileecarter.estimate(mxm1y, mxf1y, nx = 1)
+
+# projections
+pred3 <- mortcast.blend(e0m1y, e0f1y, meth1 = "lc", meth2 = "mlt",
+    weights = c(1,0.25), min.age.groups = 131,
+    meth1.args = list(lc.pars = lcest1y),
+    meth2.args = list(nx = 1),
+    kannisto.args = list(est.ages = 90:99, proj.ages = 100:130))
+    
+# plot results
+par(mfrow=c(1,1))
+plot(0:130, pred3$female$mx[,5], log = "y", type = "l", col = "red")
+lines(0:130, pred3$male$mx[,5], col = "blue")
 
 }
 \seealso{

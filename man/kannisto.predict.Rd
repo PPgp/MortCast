@@ -10,7 +10,8 @@ kannisto.predict(pars, ages)
 \item{pars}{A named vector with Kanisto coefficients \eqn{c} and \eqn{d} 
 (e.g. result of \code{\link{kannisto.estimate}} or \code{\link{cokannisto.estimate}}).}
 
-\item{ages}{A vector of ages to make prediction for.}
+\item{ages}{A vector of ages to make prediction for. These can be indices of age groups or raw ages, 
+but on the same scale as used in the estimation.}
 }
 \value{
 Vector of predicted mortality rates.

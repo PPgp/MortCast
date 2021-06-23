@@ -24,7 +24,7 @@ If \code{abridged} is \code{FALSE}, they correspond to 1m0, 1m1, 1m2, 1m3, \dots
 In the former case, the \code{mx} vector is interpreted as corresponding to age groups 0, 1-4, 5-9, 10-14, \dots.
 If \code{FALSE}, the \code{mx} vector is interpreted as corresponding to one-year age groups, i.e. 0, 1, 2, 3, \dots.}
 
-\item{a0rule}{Rule for approximation of a0. "ak" (default) uses the Andreev-Kingkade method (DR 2015), "cd" uses the 
+\item{a0rule}{Rule for approximation of a0. "ak" (default) uses the Andreev-Kingkade method (Andreev and Kingkade, 2015), "cd" uses the 
 Coale-Demeany method.}
 
 \item{radix}{Base of the life table.}
@@ -46,7 +46,9 @@ Data frame with rows corresponding to age groups and the following columns:
                 is the survival from age 0-4 to age 5-9, third row has the survival from 5-9 to 10-14 etc.}
       \item{Tx}{Person-years lived after age x.}
       \item{ex}{Life expectancy at age x.}
-      \item{ax}{Average person-years lived in the interval by those dying in the interval. For young ages, it follows Preston et al. (2001), Table 3.3 on page 48.
+      \item{ax}{Average person-years lived in the interval by those dying in the interval. For young ages, 
+                it follows Preston et al. (2001), Table 3.3 on page 48. If \code{a0rule} is "ak" (default) 
+                the Andreev-Kingkade method is used for a0. 
                 For compatibility with computations done at the UN, we set ax for ages 5 and 10 in the abridged version
                 to 2.5. For an unabridged life table, ax is set to 0.5 for all but first and last age groups.}
 }
@@ -56,7 +58,7 @@ Function for obtaining life table quantities from mortality rates.
 }
 \details{
 Computes a life table corresponding to given mortality rates for either 5- or 1-year age groups. The implementation follows
-   Preston et al. (2001), including the choice of ax (see Table 3.3 on page 48).
+   Preston et al. (2001).
 }
 \examples{
 data(mxF, e0Fproj, package = "wpp2017")
@@ -68,4 +70,7 @@ life.table(mxf, sex = "female")
 }
 \references{
 Preston, S.H., Heuveline, P., Guillot, M. (2001). Demography: Measuring and Modeling Population Processes. Oxford: Blackwell Publishers Ltd.
+   
+   Andreev, E.M. and Kingkade, W.W. (2015). \href{https://www.demographic-research.org/volumes/vol33/13/33-13.pdf}{Average age at death in infancy and infant mortality level: Reconsidering the Coale-Demeny formulas at current levels of low mortality.}
+   Demographic Research, 33(13), p.363-390. DOI: 10.4054/DemRes.2015.33.13
 }

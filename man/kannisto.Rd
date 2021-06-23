@@ -12,10 +12,11 @@ rows correspond to age groups with rownames identifying the corresponding age as
 By default five-years age groups are assigned to rows if rownames are not given.}
 
 \item{est.ages}{A vector of integers identifying the ages to be used 
-for estimation. It should be a subset of rownames of \code{mx}.}
+for estimation. It should be a subset of rownames of \code{mx}. Change the defaults if 
+1-year age groups are used (see Example).}
 
 \item{proj.ages}{A vector of integers identifying the age groups for which mortality rates 
-are to be projected.}
+are to be projected. Change the defaults if 1-year age groups are used (see Example).}
 }
 \value{
 A vector or matrix containing the input mortality object \code{mx}
@@ -43,6 +44,17 @@ ages <- as.integer(rownames(mxnew))
 plot(ages, mxnew[,"2095-2100"], type="l", log="y", 
     xlab="age", ylab="mx", col="red")
 lines(ages, mxnew[,"2010-2015"])
+
+# Kannisto for 1-year age groups
+# derive toy 1-year mx using model life tables at e0 of 70
+mx1y <- mlt(70, sex = "male", nx = 1)
+# Pretend we only observed mx for ages 0:100. 
+# Use 90-99 for estimation and extend mx from 100 to 140
+mx1ynew <- kannisto(mx1y[1:100, , drop = FALSE], est.ages = 90:99, proj.ages = 100:140)
+# Plot the new mx for old ages
+plot(80:140, mx1ynew[81:141], type = "l", xlab="age", ylab="mx", col="red")
+# Check how it compares to the original mx that was not used in the estimation
+lines(100:130, mx1y[101:nrow(mx1y)])
 
 }
 \references{

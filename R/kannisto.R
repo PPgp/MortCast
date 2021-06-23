@@ -13,9 +13,10 @@
 #'    rows correspond to age groups with rownames identifying the corresponding age as integers.
 #'    By default five-years age groups are assigned to rows if rownames are not given.
 #' @param est.ages A vector of integers identifying the ages to be used 
-#'    for estimation. It should be a subset of rownames of \code{mx}.
+#'    for estimation. It should be a subset of rownames of \code{mx}. Change the defaults if 
+#'    1-year age groups are used (see Example).
 #' @param proj.ages A vector of integers identifying the age groups for which mortality rates 
-#'    are to be projected.
+#'    are to be projected. Change the defaults if 1-year age groups are used (see Example).
 #' @return A vector or matrix containing the input mortality object \code{mx}
 #'    extended by the extrapolated age groups.
 #' @export
@@ -34,6 +35,18 @@
 #'     xlab="age", ylab="mx", col="red")
 #' lines(ages, mxnew[,"2010-2015"])
 #' 
+#' # Kannisto for 1-year age groups
+#' # derive toy 1-year mx using model life tables at e0 of 70
+#' mx1y <- mlt(70, sex = "male", nx = 1)
+#' # Pretend we only observed mx for ages 0:100. 
+#' # Use 90-99 for estimation and extend mx from 100 to 140
+#' mx1ynew <- kannisto(mx1y[1:100, , drop = FALSE], est.ages = 90:99, proj.ages = 100:140)
+#' # Plot the new mx for old ages
+#' plot(80:140, mx1ynew[81:141], type = "l", xlab="age", ylab="mx", col="red")
+#' # Check how it compares to the original mx that was not used in the estimation
+#' lines(100:130, mx1y[101:nrow(mx1y)])
+#' 
+
 kannisto <- function(mx, est.ages = seq(80, 95, by=5), 
                      proj.ages = seq(100, 130, by=5)) {
     ages <- if(length(dim(mx)) == 0) names(mx) else rownames(mx) 
@@ -44,8 +57,8 @@ kannisto <- function(mx, est.ages = seq(80, 95, by=5),
     rownames(Mxe) <- ages
     est.ages.char <- as.character(est.ages)
     if(any(!est.ages.char %in% rownames(Mxe)))
-        stop("est.ages are not included in mx.")
-    est.data <- Mxe[est.ages.char,]
+        stop("est.ages are not included in mx. Check the rownames of mx.")
+    est.data <- Mxe[est.ages.char,, drop = FALSE]
     kann.pars <- apply(est.data, 2, kannisto.estimate, ages = est.ages)
     kanncoefs <- lapply(kann.pars, function(x) x$coefficients)
     res <- lapply(kanncoefs, kannisto.predict, ages=proj.ages)
@@ -86,9 +99,11 @@ kannisto <- function(mx, est.ages = seq(80, 95, by=5),
 #' @param mxF A vector or matrix of female mortality rates. Its length or dimension 
 #'    should be the same \code{mxM}.
 #' @param est.ages A vector of integers identifying the ages to be used 
-#'    for estimation. It should be a subset of rownames of \code{mxM}.
+#'    for estimation. It should be a subset of rownames of \code{mxM}. Change the defaults if 
+#'    1-year age groups are used (see Example in \code{\link{kannisto}}).
 #' @param proj.ages A vector of integers identifying the age groups for which mortality rates 
-#'    are to be projected.
+#'    are to be projected. Change the defaults if 
+#'    1-year age groups are used (see Example in \code{\link{kannisto}}).
 #' @return A list of two vectors or matrices (for male and female) containing the input motality 
 #'    objects extended by the extrapolated age groups.
 #' @export
@@ -169,7 +184,7 @@ cokannisto <- function(mxM, mxF,
 #'     the function estimates the \eqn{c} and \eqn{d} parameters using 
 #'     values of \code{ages} as the covariate \eqn{x}.
 #' @param mx A vector of mortality rates.
-#' @param ages A vector of ages corresponding to \code{mx}.
+#' @param ages A vector of ages corresponding to \code{mx}. These can be indices of age groups or raw ages. 
 #' @return List with the following components:
 #' \describe{
 #'    \item{\code{coefficients}:}{named vector with Kannisto coefficients \eqn{c} and \eqn{d}.}
@@ -260,7 +275,8 @@ cokannisto.estimate <- function(mxM, mxF, ages, fitted = TRUE){
 #'     to predict mortality rates for age groups \eqn{x} given by \code{ages}.
 #' @param pars A named vector with Kanisto coefficients \eqn{c} and \eqn{d} 
 #'     (e.g. result of \code{\link{kannisto.estimate}} or \code{\link{cokannisto.estimate}}).
-#' @param ages A vector of ages to make prediction for.
+#' @param ages A vector of ages to make prediction for. These can be indices of age groups or raw ages, 
+#'     but on the same scale as used in the estimation.
 #' @return Vector of predicted mortality rates.
 #' @export
 #' @seealso \code{\link{cokannisto}}, \code{\link{kannisto.estimate}}, \code{\link{cokannisto.estimate}}

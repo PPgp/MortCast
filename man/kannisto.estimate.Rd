@@ -9,7 +9,7 @@ kannisto.estimate(mx, ages)
 \arguments{
 \item{mx}{A vector of mortality rates.}
 
-\item{ages}{A vector of ages corresponding to \code{mx}.}
+\item{ages}{A vector of ages corresponding to \code{mx}. These can be indices of age groups or raw ages.}
 }
 \value{
 List with the following components:

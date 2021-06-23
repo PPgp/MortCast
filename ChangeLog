@@ -1,3 +1,11 @@
+2.4-0 (06/23/2021)
+-----
+Added a0rule argument to life table functions for computing a0. The default is now the Andreev-Kingkade method (instead of Coale-Demeany). [thanks to Tim Riffe and his DemoTools]
+
+Computation of sx for the open age group in life tables for 1-year age groups modified [thanks to Tim Riffe].
+
+Added examples of mx forecasting for one-year age groups.
+
 2.3-0 (05/28/2020)
 -----
 The MLT and PMD methods work now with mx defined for 1-year age groups.

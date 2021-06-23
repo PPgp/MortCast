@@ -9,7 +9,7 @@ Data frame containing columns \dQuote{sex}, \dQuote{age}, \dQuote{ax}, \dQuote{b
     Rows correspond to sex and age groups.
 }
 \source{
-\url{http://www.demog.berkeley.edu/~jrw/LogQuad}
+\url{https://u.demog.berkeley.edu/~jrw/LogQuad/}
 }
 \usage{
 data(LQcoef)
