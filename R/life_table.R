@@ -53,11 +53,11 @@ life.table <- function(mx, sex = c("male", "female", "total"), abridged = TRUE, 
     sex <- list(male=1, female=2, total=3)[[sex]]
     a0cat <- list(ak = 1, cd = 2)[[match.arg(a0rule)]]
     if(abridged) {
-        ages <- c(0, 1, seq(5, length = length(mx)-2, by = 5))
-        LTfct <- "LifeTableAbridged"
+        ages <- c(0, 1, seq(5, length = length(mx)-2, by = 5)) 
+        nx <- 5
     } else {
         ages <- seq(0, length = length(mx))
-        LTfct <- "LifeTable"
+        nx <- 1
     }
     nage <- length(ages)
     Lx <- lx <- qx <- Tx <- sx <- dx <- ax <- rep(0, nage)
@@ -72,8 +72,8 @@ life.table <- function(mx, sex = c("male", "female", "total"), abridged = TRUE, 
         return(data.frame(age=resage, mx=mx[1:nresage], qx=nas, lx=nas, dx=nas, Lx=nas, 
                           sx=nas, Tx=nas, ex=nas, ax=nas))
     
-    LTC <- do.call(".C", list(LTfct, as.integer(sex), as.integer(nagem1), as.numeric(mx), as.integer(a0cat),
-              Lx=Lx, lx=lx, qx=qx, ax=ax, Tx=Tx, sx=sx, dx=dx, PACKAGE = "MortCast"))
+    LTC <- .C("LifeTable", as.integer(nx), as.integer(sex), as.integer(nagem1), as.numeric(mx), as.integer(a0cat),
+              Lx=Lx, lx=lx, qx=qx, ax=ax, Tx=Tx, sx=sx, dx=dx, PACKAGE = "MortCast")
     LT <- data.frame(age=as.integer(ages), mx=mx, qx=LTC$qx, lx=LTC$lx, dx=LTC$dx, Lx=LTC$Lx,  sx=LTC$sx, Tx=LTC$Tx, 
                      ex=LTC$Tx/LTC$lx, ax=LTC$ax)
     LT$ax[nage] <- LT$ex[nage]

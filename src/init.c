@@ -9,16 +9,14 @@
 extern void LC(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
 extern void PMD(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
 extern void LQuad(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
-extern void LifeTable(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
-extern void LifeTableAbridged(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
+extern void LifeTable(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
 extern void adjust_mx(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
 
 static const R_CMethodDef CEntries[] = {
     {"LC", (DL_FUNC) &LC, 17},
     {"PMD", (DL_FUNC) &PMD, 19},
     {"LQuad", (DL_FUNC) &LQuad, 16},
-    {"LifeTable", (DL_FUNC) &LifeTable, 11},
-    {"LifeTableAbridged", (DL_FUNC) &LifeTableAbridged, 11},
+    {"LifeTable", (DL_FUNC) &LifeTable, 12},
     {"adjust_mx", (DL_FUNC) &adjust_mx, 11},
     {NULL, NULL, 0}
 };
