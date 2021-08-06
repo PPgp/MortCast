@@ -672,3 +672,85 @@ void LQuad(int *Npred, int *Sex, int *Nage, double *Eop,
         }
     }
 }
+
+/*****************************************************************************
+ * adjust_mx model
+ * Adjust projection of age-specific mortality rates from mortcast.blend 
+ * to match input e0
+ * 
+ *****************************************************************************/
+void adjust_mx(int *Npred, int *Sex, int *Nage, int *Nx, double *mx0, 
+         double *Eop, int *a0rule,
+         double *LLm, double *Sr, double *lx, double *Mx) {
+    double eop, eopn, eopp, mxm[*Nage], mxp[*Nage];
+    int i, j, sex, npred, pred, nage, nagem1, nx;
+    double scale, scalep, new_scale, f, fp;
+    
+    npred = *Npred;
+    sex=*Sex;
+    nage=*Nage;
+    nx = *Nx;
+    
+    if(nx == 1) nagem1 = nage;
+    else nagem1 = nage-1;
+    
+    double sx[nagem1], Lm[nagem1], lm[nagem1], dx[nagem1], Tx[nagem1];
+    
+    for (pred=0; pred < npred; ++pred) {
+        eop = Eop[pred];
+        scale = 1.0; /* initial scaling factor */
+        eopp = 0;
+        fp = 99999;
+        for (i=0; i < nage; ++i) {
+            mxm[i] = mx0[i + pred*nage];
+        }
+        for(j = 0; j < 20; j++) {
+            LTforLC(sex, nagem1, nx, mxm, *a0rule, Lm, lm);
+            LTextraColumns(nx, nagem1, lm, Lm, dx, Tx, sx);
+            eopn = Tx[0]/lm[0];
+            f = fabs(eopn - eop)/eop;
+            if (f < 0.000005 || eopn == eopp) break;
+            if(j > 0 && f > fp) { /* revert to the previous values */
+                for (i=0; i < nage; ++i) {
+                    mxm[i] = mxp[i];
+                }
+                LTforLC(sex, nagem1, nx, mxm, *a0rule, Lm, lm);
+                LTextraColumns(nx, nagem1, lm, Lm, dx, Tx, sx);
+                eopn = Tx[0]/lm[0];
+                break;
+            }
+            if(j == 0) {
+                new_scale = eopn/eop;
+            } else {
+                new_scale = scale - (eopn - eop)*(scale - scalep)/(eopn - eopp);
+            }
+            /*if(pred == 10){
+                Rprintf("\n%i: eop=%lf, eopn=%lf, eopp=%lf, scale=%lf, scalep=%lf, new_scale=%lf, f=%lf", 
+                        j, eop, eopn, eopp, scale, scalep, new_scale, f);
+            }*/
+            scalep = scale;
+            scale = new_scale;
+            eopp = eopn;
+            fp = f;
+
+            for (i=0; i < nage; ++i) {
+                mxp[i] = mxm[i];
+                mxm[i] = scale * mxm[i];
+            }
+            
+        }
+        /*Rprintf("\n%i: loops = %i, eop=%lf, eopf=%lf, scale=%lf", pred, j, eop, eopn, scale);*/
+        
+        for (i=0; i < nagem1; ++i) {
+            Sr[i + pred*nagem1] = sx[i];
+            Mx[i + pred*nage] = mxm[i];
+            lx[i + pred*nagem1] = lm[i];
+            LLm[i + pred*nagem1] = Lm[i];
+            /*Rprintf("\ni=%i: LLm=%lf, Sr=%lf Mx=%lf", i, LLm[i + pred*nagem1], Sr[i + pred*nagem1], Mx[i + pred*nage]);*/
+        }
+        if(nx > 1) {
+            Mx[nagem1 + pred*nage] = mxm[nagem1]; /* for nx=5, mx has one age group more than the rest */
+            /*Rprintf("\ni=%i: Mx=%lf", Mx[nagem1 + pred*nage]);*/
+        }
+    }
+}

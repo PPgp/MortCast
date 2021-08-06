@@ -161,6 +161,7 @@ pmd <- function(e0, mx0, sex = c("male", "female"), nx = 5, interp.rho = FALSE,
         if(is.null(ages)) ages <- default.ages
         result[[sex]]$mx <- matrix(PMDres$Mx, nrow=nage, 
                                    dimnames=list(ages, names(e0l[[sex]])))
+        result[[sex]]$nx <- nx
         if(keep.lt) {
             result[[sex]]$sr <- matrix(PMDres$Sr, nrow=resnage, dimnames=list(age.groups, names(e0l[[sex]])))
             result[[sex]]$Lx <- matrix(PMDres$LLm, nrow=resnage, dimnames=list(age.groups, names(e0l[[sex]])))
@@ -307,7 +308,7 @@ copmd <- function(e0m, e0f, mxm0, mxf0, nx = 5, interp.rho = FALSE, keep.rho = F
 #'     
 #' @rdname mltgroup
 
-mlt <- function(e0, sex = c("male", "female"), type = "CD_West", nx = 5) {
+mlt <- function(e0, sex = c("male", "female"), type = "CD_West", nx = 5, ...) {
     sex <- match.arg(sex)
     sexcode <- c(female=2, male=1)[sex]
     if(length(dim(e0)) > 0) e0 <- drop(as.matrix(e0)) # if it's a data.frame, it would not drop dimension without as.matrix
@@ -358,13 +359,15 @@ mlt <- function(e0, sex = c("male", "female"), type = "CD_West", nx = 5) {
 #' @param e0f A time series of target female life expectancy.
 #' @param \dots Additional arguments passed to the underlying function. 
 #' 
-mltj <- function(e0m, e0f, ...) {
+mltj <- function(e0m, e0f, ..., nx = 5) {
     e0  <- list(female=e0f, male=e0m)
     res <- list()
     for(sex in names(e0)) {
         res[[sex]] <- list()
-        if(!is.null(e0[[sex]]))
-            res[[sex]]$mx <- mlt(e0 = e0[[sex]], sex = sex, ...)
+        if(!is.null(e0[[sex]])) {
+            res[[sex]]$mx <- mlt(e0 = e0[[sex]], sex = sex, ..., nx = nx)
+            res[[sex]]$nx <- nx
+        }
     }
     return(res)
 }
@@ -445,7 +448,7 @@ logquad <- function(e0, sex = c("male", "female", "total"), my.coefs = NULL,
     # initialize results
     zeromatsr <- matrix(0, nrow=nage-1, ncol=npred)
     zeromatmx <- matrix(0, nrow=nage, ncol=npred)
-    result <- list(mx=zeromatmx, lx=zeromatmx, sr=zeromatsr, Lx=zeromatsr)
+    result <- list(mx=zeromatmx, lx=zeromatmx, sr=zeromatsr, Lx=zeromatsr, nx = 5)
 
     LQres <- .C("LQuad", as.integer(npred), as.integer(sex.code), 
                  as.integer(nage), as.numeric(e0), 
@@ -602,8 +605,9 @@ logquadj <- function(e0m, e0f, ...) {
 #' 
 #' @name mortcast.blend
 mortcast.blend <- function(e0m, e0f, 
-                          meth1 = "lc", meth2 = "mlt", weights = c(1, 0.5),
-                          apply.kannisto = TRUE, min.age.groups = 28,
+                          meth1 = "lc", meth2 = "mlt", weights = c(1, 0.5), 
+                          nx = 5, a0rule = c("ak", "cd"), keep.lt = FALSE, 
+                          apply.kannisto = TRUE, min.age.groups = 28, match.e0 = FALSE,
                           meth1.args = NULL, meth2.args = NULL, kannisto.args = NULL) {
 
     methods.allowed <- list(lc = "mortcast", mlt = "mltj", pmd = "copmd", logquad = "logquadj")
@@ -615,8 +619,18 @@ mortcast.blend <- function(e0m, e0f,
     if(is.null(w)) w <- 0.5
     if(length(w) == 1) w <- rep(w, npred)
     if(!(length(w) == 2 || length(w) == npred))
-        stop("Weights should be either of length 1 (constant weight), 2 (interpolated etween start and end) or the same size as e0.")
+        stop("Weights should be either of length 1 (constant weight), 2 (interpolated between start and end) or the same size as e0.")
     if(any(w > 1 | w < 0)) stop("Weights must be between 0 and 1.")
+    
+    if(!nx %in% c(1, 5))
+        stop("The nx argument must be either 5 or 1.")
+    
+    a0rule <- match.arg(a0rule)
+    a0cat <- list(ak = 1, cd = 2)[[a0rule]]
+    meth1.args[["nx"]] <- nx
+    meth2.args[["nx"]] <- nx
+    meth1.args[["a0rule"]] <- a0rule
+    meth2.args[["a0rule"]] <- a0rule
     
     mx1 <- do.call(methods.allowed[[meth1]], c(list(e0m, e0f), meth1.args))
     mx2 <- do.call(methods.allowed[[meth2]], c(list(e0m, e0f), meth2.args))
@@ -636,6 +650,45 @@ mortcast.blend <- function(e0m, e0f,
         if(is.null(wmat))
            wmat <- matrix(w, ncol = npred, nrow = nrow(mx1[[sex]]$mx), byrow = TRUE)
         res[[sex]] <- list(mx = wmat * mx1[[sex]]$mx + (1-wmat) * mx2[[sex]]$mx)
+    }
+    if(match.e0) {
+        e0l  <- list(female=e0f, male=e0m)
+        nage <- nrow(res[[sex]]$mx)
+        if(nx == 5) {
+            default.ages <- c(0, 1, seq(5, length = nage - 2, by = 5))
+            resnage <-  nage-1 # number of age groups of the resulting matrices 
+            age.groups <- default.ages[-2] # group 0-1 collapsed into 0-5
+        } else {
+            default.ages <- seq(0, nage - 1)
+            resnage <-  nage # all ages
+            age.groups <- default.ages
+        }
+        zeromatsr <- matrix(0, nrow=resnage, ncol=npred)
+        newmx <- res[[sex]]$mx
+        for(sex in names(res)) {
+            ressex <- list(lx=zeromatsr, sr=zeromatsr, Lx=zeromatsr)
+            adjres <- .C("adjust_mx", as.integer(npred), as.integer(c(female=2, male=1)[sex]), 
+                     as.integer(nage), as.integer(nx),
+                     as.numeric(res[[sex]]$mx), as.numeric(e0l[[sex]]), 
+                     a0rule = as.integer(a0cat),
+                     LLm = as.numeric(ressex$Lx), Sr=as.numeric(ressex$sr), 
+                     lx=as.numeric(ressex$lx), Mx=as.numeric(newmx))
+            res[[sex]]$mx.rawblend <- res[[sex]]$mx
+            res[[sex]]$mx[] <- adjres$Mx
+            #stop("")
+            if(keep.lt) {
+                res[[sex]]$sr <- matrix(adjres$Sr, nrow=resnage,
+                                           dimnames=list(age.groups, names(e0l[[sex]])))
+                res[[sex]]$Lx <- matrix(adjres$LLm, nrow=resnage,
+                                           dimnames=list(age.groups, names(e0l[[sex]])))
+                res[[sex]]$lx <- matrix(adjres$lx, nrow=resnage, 
+                                           dimnames=list(age.groups, names(e0l[[sex]])))
+            } else {
+                res[[sex]]$sr <- NULL
+                res[[sex]]$Lx <- NULL
+                res[[sex]]$lx <- NULL
+            }
+        }
     }
     return(c(res, list(meth1res = mx1, meth2res = mx2, 
                        meth1 = meth1, meth2 = meth2, weights = w)))

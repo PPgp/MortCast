@@ -346,6 +346,7 @@ mortcast <- function (e0m, e0f, lc.pars, rotate = TRUE, keep.lt = FALSE,
                   lx=as.numeric(result[[sex]]$lx), Mx=as.numeric(result[[sex]]$mx))
         result[[sex]]$mx <- matrix(LCres$Mx, nrow=nage, 
                                    dimnames=list(lc.pars$ages, names(e0m)))
+        result[[sex]]$nx <- lc.pars$nx
         if(keep.lt) {
             result[[sex]]$sr <- matrix(LCres$Sr, nrow=resnage,
                                        dimnames=list(age.groups, names(e0m)))
