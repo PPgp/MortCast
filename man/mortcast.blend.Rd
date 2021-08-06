@@ -10,11 +10,15 @@ mortcast.blend(
   meth1 = "lc",
   meth2 = "mlt",
   weights = c(1, 0.5),
+  nx = 5,
   apply.kannisto = TRUE,
   min.age.groups = 28,
+  match.e0 = TRUE,
+  keep.lt = FALSE,
   meth1.args = NULL,
   meth2.args = NULL,
-  kannisto.args = NULL
+  kannisto.args = NULL,
+  ...
 )
 }
 \arguments{
@@ -37,6 +41,8 @@ If it is a vector of size two, it is assumed these are weights for the first and
 time period. Remaining weights will be interpolated. Note that \code{meth2} is weighted 
 by \code{1 - weights}.}
 
+\item{nx}{Size of age groups. Should be either 5 or 1.}
+
 \item{apply.kannisto}{Logical. If \code{TRUE} and if any of the methods results in less than 
 \code{min.age.groups} age categories, the coherent Kannisto method (\code{\link{cokannisto}}) 
 is applied to extend the age groups into old ages.}
@@ -44,16 +50,26 @@ is applied to extend the age groups into old ages.}
 \item{min.age.groups}{Minimum number of age groups. Triggers the application of Kannisto, see above. 
 Change the default value if 1-year age groups are used (see Example).}
 
+\item{match.e0}{Logical. If \code{TRUE} the blended mx is scaled so that it matches the input e0.}
+
+\item{keep.lt}{Logical. If \code{TRUE} additional life table columns are kept in the 
+resulting object. Only used if \code{match.e0} is \code{TRUE}.}
+
 \item{meth1.args}{List of arguments passed to the function that corresponds to \code{meth1}.}
 
 \item{meth2.args}{List of arguments passed to the function that corresponds to \code{meth2}.}
 
 \item{kannisto.args}{List of arguments passed to the \code{\link{cokannisto}} function if Kannisto is applied. 
 If 1-year age groups are used various defaults in the Kannisto function need to be changed (see Example).}
+
+\item{\dots}{Additional life table arguments.}
 }
 \value{
 List with elements \code{female} and \code{male}, each of which contains a matrix \code{mx}
-    with the predicted mortality rates. In addition, it contains elements \code{meth1res} and \code{meth2res}
+    with the predicted mortality rates. If the result has been scaled (\code{match.e0} is \code{TRUE}), the element 
+    \code{mx.rawblend} contains the mx before scaling. Also in such a case, if \code{keep.lt} is \code{TRUE}, it also 
+    contains matrices \code{sr} (survival rates), and life table quantities \code{Lx} and \code{lx}.
+    In addition, the return object contains elements \code{meth1res} and \code{meth2res}
     which contain the results of the functions corresponding to the two methods. 
     Elements \code{meth1} and \code{meth2} contain the names of the methods. 
     A vector \code{weights} contains the final (possibly interpolated) weights.
@@ -65,7 +81,9 @@ Predict age-specific mortality rates using a blend of two different methods (Coh
 \details{
 The function allows to combine two different methods using given weights.
     The weights can change over time - by default they are interpolated from the starting weight 
-    to the end weight. The projection is done for both sexes, so that coherent methods can be applied.
+    to the end weight. As the blended mortality rates do not necessarily match the target life expectancy, 
+    scaling is applied to improve the match, controlled by the \code{match.e0} argument. 
+    The projection is done for both sexes, so that coherent methods can be applied.
 }
 \examples{
 data(mxM, mxF, e0Fproj, e0Mproj, package = "wpp2017")
@@ -120,9 +138,8 @@ lcest1y <- lileecarter.estimate(mxm1y, mxf1y, nx = 1)
 
 # projections
 pred3 <- mortcast.blend(e0m1y, e0f1y, meth1 = "lc", meth2 = "mlt",
-    weights = c(1,0.25), min.age.groups = 131,
+    weights = c(1,0.25), min.age.groups = 131, nx = 1, 
     meth1.args = list(lc.pars = lcest1y),
-    meth2.args = list(nx = 1),
     kannisto.args = list(est.ages = 90:99, proj.ages = 100:130))
     
 # plot results

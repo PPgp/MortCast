@@ -288,6 +288,18 @@ void LifeTable(int *sex, int *nage, double *mx, int *a0rule,
     LTextraColumns(1, *nage, lx, Lx, dx, Tx, sx);
 }
 
+/*****************************************************************************
+ * Life table with extra columns; nx determines if it is abridged or not
+ *****************************************************************************/
+
+void FullLifeTable(int *nx, int *sex, int *nage, double *mx, int *a0rule,
+                       double *Lx, double *lx, double *qx, double *ax, double *Tx, double *sx, double *dx) {
+    if(*nx > 1) LifeTableAbridged(sex, nage, mx, a0rule, Lx, lx, qx, ax, Tx, sx, dx);
+    else LifeTable(sex, nage, mx, a0rule, Lx, lx, qx, ax, Tx, sx, dx);
+    /*Rprintf("\nFLT: nx=%i, sex=%i, nage=%i Tx[0]=%lf lx[0]=%lf", *nx, *sex, *nage, Tx[0], lx[0]);*/
+}
+
+
 /* Wrapper around doLifeTable1y 
  * Used when qx and ax is not needed.
  */
@@ -683,7 +695,7 @@ void adjust_mx(int *Npred, int *Sex, int *Nage, int *Nx, double *mx0,
          double *Eop, int *a0rule,
          double *LLm, double *Sr, double *lx, double *Mx) {
     double eop, eopn, eopp, mxm[*Nage], mxp[*Nage];
-    int i, j, sex, npred, pred, nage, nagem1, nx;
+    int i, j, sex, npred, pred, nage, nagem1, nx, ltage;
     double scale, scalep, new_scale, f, fp;
     
     npred = *Npred;
@@ -693,9 +705,11 @@ void adjust_mx(int *Npred, int *Sex, int *Nage, int *Nx, double *mx0,
     
     if(nx == 1) nagem1 = nage;
     else nagem1 = nage-1;
+    ltage = nage - 1;
     
-    double sx[nagem1], Lm[nagem1], lm[nagem1], dx[nagem1], Tx[nagem1];
-    
+    double sx[nage], Lm[nage], lm[nage], qx[nage], ax[nage], dx[nage], Tx[nage];
+    double ressx[nagem1], resLx[nagem1], reslx[nagem1];
+        
     for (pred=0; pred < npred; ++pred) {
         eop = Eop[pred];
         scale = 1.0; /* initial scaling factor */
@@ -705,8 +719,7 @@ void adjust_mx(int *Npred, int *Sex, int *Nage, int *Nx, double *mx0,
             mxm[i] = mx0[i + pred*nage];
         }
         for(j = 0; j < 20; j++) {
-            LTforLC(sex, nagem1, nx, mxm, *a0rule, Lm, lm);
-            LTextraColumns(nx, nagem1, lm, Lm, dx, Tx, sx);
+            FullLifeTable(Nx, Sex, &ltage, mxm, a0rule, Lm, lm, qx, ax, Tx, sx, dx);
             eopn = Tx[0]/lm[0];
             f = fabs(eopn - eop)/eop;
             if (f < 0.000005 || eopn == eopp) break;
@@ -714,8 +727,7 @@ void adjust_mx(int *Npred, int *Sex, int *Nage, int *Nx, double *mx0,
                 for (i=0; i < nage; ++i) {
                     mxm[i] = mxp[i];
                 }
-                LTforLC(sex, nagem1, nx, mxm, *a0rule, Lm, lm);
-                LTextraColumns(nx, nagem1, lm, Lm, dx, Tx, sx);
+                FullLifeTable(Nx, Sex, &ltage, mxm, a0rule, Lm, lm, qx, ax, Tx, sx, dx);
                 eopn = Tx[0]/lm[0];
                 break;
             }
@@ -740,13 +752,26 @@ void adjust_mx(int *Npred, int *Sex, int *Nage, int *Nx, double *mx0,
             
         }
         /*Rprintf("\n%i: loops = %i, eop=%lf, eopf=%lf, scale=%lf", pred, j, eop, eopn, scale);*/
-        
+        if(nx > 1){ /* collapse the first age group for Lx, lx and sx */
+            resLx[0] = Lm[0] + Lm[1];
+            reslx[0] = lm[0];
+            for(i = 1; i < nagem1; ++i) {
+                resLx[i] = Lm[i+1];
+                reslx[i] = lm[i+1];
+            }
+        } else {
+            for(i = 0; i < nagem1; ++i) {
+                resLx[i] = Lm[i];
+                reslx[i] = lm[i];
+            }
+        }
+        get_sx(resLx, ressx, nagem1, nagem1, nx);
         for (i=0; i < nagem1; ++i) {
-            Sr[i + pred*nagem1] = sx[i];
+            Sr[i + pred*nagem1] = ressx[i];
             Mx[i + pred*nage] = mxm[i];
-            lx[i + pred*nagem1] = lm[i];
-            LLm[i + pred*nagem1] = Lm[i];
-            /*Rprintf("\ni=%i: LLm=%lf, Sr=%lf Mx=%lf", i, LLm[i + pred*nagem1], Sr[i + pred*nagem1], Mx[i + pred*nage]);*/
+            lx[i + pred*nagem1] = reslx[i];
+            LLm[i + pred*nagem1] = resLx[i];
+            /*Rprintf("\ni=%i: LLm=%lf, Sr=%lf Mx=%lf Lm=%lf", i, LLm[i + pred*nagem1], Sr[i + pred*nagem1], Mx[i + pred*nage], Lm[i]);*/
         }
         if(nx > 1) {
             Mx[nagem1 + pred*nage] = mxm[nagem1]; /* for nx=5, mx has one age group more than the rest */

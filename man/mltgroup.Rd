@@ -5,9 +5,9 @@
 \alias{mltj}
 \title{Model Life Tables Mortality Patterns}
 \usage{
-mlt(e0, sex = c("male", "female"), type = "CD_West", nx = 5)
+mlt(e0, sex = c("male", "female"), type = "CD_West", nx = 5, ...)
 
-mltj(e0m, e0f, ...)
+mltj(e0m, e0f, ..., nx = 5)
 }
 \arguments{
 \item{e0}{A time series of target life expectancy.}
@@ -20,11 +20,11 @@ mltj(e0m, e0f, ...)
 
 \item{nx}{Size of age groups. Should be either 5 or 1.}
 
+\item{\dots}{Additional arguments passed to the underlying function.}
+
 \item{e0m}{A time series of target male life expectancy.}
 
 \item{e0f}{A time series of target female life expectancy.}
-
-\item{\dots}{Additional arguments passed to the underlying function.}
 }
 \value{
 Function \code{mlt} returns a matrix with the predicted mortality rates. Columns correspond 
