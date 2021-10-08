@@ -16,10 +16,14 @@ For the CD types, see Coale et al. (1983). For the UN types, see the link in Ref
 \item{sex}{Code for distinguishing sexes. 1 is for male, 2 is for female.}
 \item{age}{Starting age of an age group. In \code{MLTlookup} these are 0, 1, 5, 10, ... 130. 
            The \code{MLT1Ylookup} table contains 1-year ages ranging from 0 to 130.}
-\item{e0}{Level of life expectancy, starting at 20 and going by steps of 2.5 up to 130.}
+\item{e0}{Level of life expectancy, starting at 20 and going by steps of 2.5 up to 115.}
 \item{mx}{Mortality rates.}
 \item{lx, Lx, sx}{Other life table columns.}
 }
+}
+\source{
+An updated version of these datasets were provided by Sara Hertog, United Nations Population Division, in October 2021 (package version >= 2.6-0).
+     For previous version of the tables, install MortCast 2.5-0: `devtools::install_github("PPgp/MortCast@v2.5-0")`
 }
 \usage{
 data(MLTlookup)

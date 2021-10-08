@@ -1,3 +1,7 @@
+2.6-0 (10/08/2021)
+-----
+Modified the CD and UN life tables in datasets MLTlookup and MLT1Ylookup [provided by Sara Hertog, UN].
+
 2.5-0 (08/06/2021)
 -----
 Function mortcast.blend has an argument match.e0. If TRUE (default) the mx is scaled so that the 
