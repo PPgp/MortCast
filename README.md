@@ -38,3 +38,14 @@ Other methods for forecasting mortality rates are available:
 * **mortcast.blend**: combining two different methods
 
 A life table can be constructed using the **life.table** function.
+
+#### References 
+
+Li, N. and Lee, R. D. (2005). Coherent mortality forecasts for a
+     group of populations: An extension of the Lee-Carter method.
+     Demography, 42, 575-594.
+
+Li, N., Lee, R. D. and Gerland, P. (2013). Extending the
+     Lee-Carter method to model the rotation of age patterns of
+     mortality decline for long-term projections. Demography, 50,
+     2037-2051.
