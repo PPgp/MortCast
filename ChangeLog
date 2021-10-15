@@ -1,3 +1,7 @@
+2.6-1 (10/15/2021)
+-----
+The updated MLTs converted from tibble to data.frame as it caused problems in reverse dependencies.
+
 2.6-0 (10/08/2021)
 -----
 Modified the CD and UN life tables in datasets MLTlookup and MLT1Ylookup [provided by Sara Hertog, UN].
