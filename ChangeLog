@@ -1,3 +1,7 @@
+2.6-x (02/17/2022)
+-----
+Added argument ax.smooth.df to leecarter.estimate() for passing the degree of freedom for ax smoothing.
+
 2.6-1 (10/15/2021)
 -----
 The updated MLTs converted from tibble to data.frame as it caused problems in reverse dependencies.

@@ -8,6 +8,7 @@ leecarter.estimate(
   mx,
   ax.index = NULL,
   ax.smooth = FALSE,
+  ax.smooth.df = NULL,
   bx.postprocess = TRUE,
   nx = 5
 )
@@ -20,6 +21,9 @@ and columns correspond to time periods. Rownames define the starting ages of the
 By default all time periods are used.}
 
 \item{ax.smooth}{Logical allowing to smooth the \eqn{a_x} over ages.}
+
+\item{ax.smooth.df}{Degree of freedom for smoothing if \code{ax.smooth} is \code{TRUE}. 
+Default is half the length of \eqn{a_x}.}
 
 \item{bx.postprocess}{Logical determining if numerical anomalies in \eqn{b_x} should be dealt with.}
 

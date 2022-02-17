@@ -11,6 +11,8 @@
 #' @param ax.index A vector of column indices of \code{mx} to be used to estimate the \eqn{a_x} parameter.
 #'     By default all time periods are used.
 #' @param ax.smooth Logical allowing to smooth the \eqn{a_x} over ages.
+#' @param ax.smooth.df Degree of freedom for smoothing if \code{ax.smooth} is \code{TRUE}. 
+#' Default is half the length of \eqn{a_x}.
 #' @param bx.postprocess Logical determining if numerical anomalies in \eqn{b_x} should be dealt with.
 #' @param nx Size of age groups. By default ages are determined by rownames of \code{mx}. This argument is only used if 
 #'     \code{mx} has no rownames. If \code{nx} is 5, the age groups are interpreted as 0, 1, 5, 10, \dots. For \code{nx} equals 1, 
@@ -37,7 +39,7 @@
 #' lines(lc.ax.last$ax, col="blue")
 #' 
 leecarter.estimate <- function(mx, ax.index = NULL, ax.smooth = FALSE, 
-                               bx.postprocess = TRUE, nx = 5) {
+                               ax.smooth.df = NULL, bx.postprocess = TRUE, nx = 5) {
     if(length(dim(mx)) < 2 || ncol(mx) < 2) stop("mx must be a matrix (age x time) of at least two columns.")
     lmx <- log(mx)
     if(length(dim(lmx))==0)
@@ -48,7 +50,8 @@ leecarter.estimate <- function(mx, ax.index = NULL, ax.smooth = FALSE,
     if(is.null(ax.index)) ax.index <- 1:nest
     ax <- apply(lmx[,ax.index, drop=FALSE], 1, sum, na.rm=TRUE) / length(ax.index)
     if(ax.smooth) {
-        ax.sm <- smooth.spline(ax, df=ceiling(length(ax)/2))$y
+        if (is.null(ax.smooth.df)) ax.smooth.df <- ceiling(length(ax)/2)
+        ax.sm <- smooth.spline(ax, df = ax.smooth.df)$y
         ax[-1] <- ax.sm[-1] # keep value of the first age group
     }
     kt <- apply(lmx, 2, sum) - sum(ax)
