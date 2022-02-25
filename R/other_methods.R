@@ -1,9 +1,9 @@
 #' @title Pattern of Mortality Decline Prediction
 #' @description Predict age-specific mortality rates using the Pattern of mortality decline (PMD) method (Andreev et al. 2013).
-#' @details These functions implements the PMD method introduced in Andreev et al. (2013). 
+#' @details These functions implements the PMD method introduced in Andreev et al. (2013) and its modifications. 
 #'     It assumes that the future decline in age-specific mortality will follow a certain pattern 
 #'     with the increase in life expectancy at birth (e0): 
-#'     \deqn{\log mx(t) = \log mx(t-1) - k(t) \rho_x(t)}
+#'     \deqn{log[mx(t)] = log[mx(t-1)] - k(t) \rho_x(t)}
 #'     
 #'     Here, \eqn{\rho_x(t)} is the age-specific pattern of mortality decline between \eqn{t-1}
 #'     and \eqn{t}. Such patterns for each sex and various levels of e0 
@@ -17,7 +17,9 @@
 #'     (namely the average over sex-specific \eqn{\rho_x}) is used 
 #'     for both, male and female.
 #' @param e0 A vector of target life expectancy, one element for each predicted time point. 
-#' @param mx0 A vector with starting age-specific mortality rates.
+#' @param mx0 A vector with starting age-specific mortality rates. In case of \code{modpmd} it can be 
+#'     a matrix where rows correspond to age groups
+#'     and columns correspond to time periods. Rownames define the starting ages of the age groups.
 #' @param sex Either "male" or "female".
 #' @param nx Size of age groups. Should be either 5 or 1.
 #' @param interp.rho Logical controlling if the \eqn{\rho} coefficients should be interpolated 
@@ -28,7 +30,7 @@
 #' @param keep.lt Logical. If \code{TRUE} additional life table columns are kept in the 
 #'     resulting object.
 #' @param keep.rho Logical. If \code{TRUE} the \eqn{\rho} coefficients are included in the resulting object.
-#' @return Function \code{pmd} returns a list with the following elements: a matrix \code{mx}
+#' @return Function \code{pmd} and \code{modpmd} return a list with the following elements: a matrix \code{mx}
 #'     with the predicted mortality rates. If \code{keep.lt} is \code{TRUE}, it also 
 #'     contains matrices \code{sr} (survival rates), and life table quantities \code{Lx} and \code{lx}.
 #'     If \code{keep.rho} is \code{TRUE}, it contains a matrix \code{rho} where columns correpond 
@@ -79,6 +81,72 @@ pmd <- function(e0, mx0, sex = c("male", "female"), nx = 5, interp.rho = FALSE,
     if(keep.rho)
         res[[sex]]$rho <- rho
     return(res[[sex]])
+}
+
+#' @export
+#' @rdname pmdgroup
+#' @details Function \code{modpmd} implements a modified version of \code{pmd} where the initial \eqn{log[mx(t_0)]}
+#' is replaced by an \eqn{a_x} estimated as in \code{\link{leecarter.estimate}}, i.e. using possibly 
+#' multiple years of historical \code{mx} and optionally smoothed. Arguments \code{ax.index}, \code{ax.smooth} and 
+#' \code{ax.smooth.df} determine the estimation years and parameters of the smoothing. 
+#' 
+#' @param ax.index A vector of column indices of \code{mx} to be used to estimate the \eqn{a_x = E[log(mx(t_0))]} parameter.
+#'     By default it is estimated as the average over all observed time periods, but this argument can restrict the time periods 
+#'     to use.
+#' @param ax.smooth Logical allowing to smooth the \eqn{a_x} over ages.
+#' @param ax.smooth.df Degree of freedom for smoothing if \code{ax.smooth} is \code{TRUE}. 
+#'     Default is half the length of \eqn{a_x}.
+#' 
+
+
+modpmd <- function(e0, mx0, sex = c("male", "female"), nx = 5, interp.rho = FALSE,
+                kranges = c(0, 25), ax.index = NULL, ax.smooth = FALSE, 
+                ax.smooth.df = NULL, keep.lt = FALSE, keep.rho = FALSE, ...) {
+    sex <- match.arg(sex)
+    mx0 <- .prepare.mx.for.modpmd(mx0, nx = nx)
+    if(length(dim(e0)) > 0) e0 <- drop(as.matrix(e0)) # if it's a data.frame, it would not drop dimension without as.matrix
+    npred <- length(e0)
+
+    # compute ax
+    mx0v <- .compute.mx0.for.modpmd(mx0, ax.index = ax.index, ax.smooth = ax.smooth, 
+                                   ax.smooth.df = ax.smooth.df)
+
+    nage <- length(mx0v) # mx0v is a vector
+    # find rho and initialize results
+    rho <- .find.pmd.rho(if(sex == "male") MortCast::RhoMales else MortCast::RhoFemales, 
+                         e0, nage, npred, interp.rho = interp.rho, nx = nx)
+    mx0l <- list(mx0v)
+    e0l <- list(e0)
+    names(mx0l) <- names(e0l) <- sex
+    
+    # compute pmd
+    res <- .do.copmd(e0l, mx0l, rho = rho, npred = npred, nx = nx, kranges = kranges,
+                     keep.lt = keep.lt, ...)
+    if(keep.rho)
+        res[[sex]]$rho <- rho
+    return(res[[sex]])
+}
+
+.prepare.mx.for.modpmd <- function(mx, nx = 5){
+    if(length(dim(mx))==0)
+        mx <- as.matrix(mx)
+    if(is.null(rownames(mx))) # default ages
+        rownames(mx) <- if(nx > 1) c(0,1, seq(nx, by=nx, length=nrow(mx)-2)) else 0:(nrow(mx)-1)
+    return(mx)
+}
+
+.compute.mx0.for.modpmd <- function(mx, ax.index = NULL, ax.smooth = FALSE, ax.smooth.df = NULL){
+    # compute ax
+    lmx <- log(mx)
+    nest <- ncol(lmx)
+    if(is.null(ax.index)) ax.index <- 1:nest
+    ax <- apply(lmx[,ax.index, drop=FALSE], 1, sum, na.rm=TRUE) / length(ax.index)
+    if(ax.smooth) {
+        if (is.null(ax.smooth.df)) ax.smooth.df <- ceiling(length(ax)/2)
+        ax.sm <- smooth.spline(ax, df = ax.smooth.df)$y
+        ax[-1] <- ax.sm[-1] # keep value of the first age group
+    }
+    return(exp(ax))
 }
 
 .find.pmd.rho <- function(rho, e0, nage, npred, interp.rho = FALSE, nx = 5) {
@@ -205,10 +273,13 @@ pmd <- function(e0, mx0, sex = c("male", "female"), nx = 5, interp.rho = FALSE,
 #' @rdname pmdgroup
 #' @param e0m A time series of target male life expectancy.
 #' @param e0f A time series of target female life expectancy.
-#' @param mxm0 A vector with starting age-specific male mortality rates.
-#' @param mxf0 A vector with starting age-specific female mortality rates.
+#' @param mxm0,mxf0 A vector with starting age-specific male/female mortality rates. If \code{use.modpmd} is \code{TRUE},
+#'    this can be a matrix of historical mx (age x time) from which the starting values are estimated.
 #' @param nx Size of age groups. Should be either 5 or 1.
-#' @param \dots Additional arguments passed to the underlying function. For \code{copmd}, in addition to
+#' @param use.modpmd Logical determining if the modified version of PMD (\code{modpmd}) should be used. 
+#'    In such a case the starting values of mortality rates are estimated similarly to \eqn{a_x} in 
+#'    \code{\link{leecarter.estimate}}, possibly from more than one time periods. In addition, a smooting can be applied.
+#' @param \dots Additional arguments passed to the underlying functions. For \code{copmd}, in addition to
 #'      \code{kranges} and \code{keep.lt}, it can be \code{sexratio.adjust} which is 
 #'      a logical controlling if a sex-ratio adjustment should be applied to prevent crossovers 
 #'      between male and female mx. In such a case it uses coefficients from the \code{\link{PMDadjcoef}} dataset. 
@@ -218,28 +289,41 @@ pmd <- function(e0, mx0, sex = c("male", "female"), nx = 5, interp.rho = FALSE,
 #'      If the argument \code{adjust.sr.if.needed} is set to \code{TRUE}, a sex-ratio adjustment
 #'      is performed dynamically, using the sex ratio in the previous time point. 
 #'      In such a case, an adjustment in time t is applied only if there was a drop of sex ratio 
-#'      below one at time t-1. 
+#'      below one at time t-1. Other arguments passed here in \code{copmd} can be \code{ax.index}, \code{ax.smooth} and
+#'      \code{ax.smooth.df} which control the estimation of the initial mx if \code{use.modpmd} is \code{TRUE}.
 #' @return Function \code{copmd} returns a list with one element for each sex 
 #'     (\code{male} and \code{female}) where each of them is a list as described above.
 #'     In addition if \code{keep.rho} is \code{TRUE}, element \code{rho.sex} 
 #'     gives the sex-dependent (i.e. not averaged) \eqn{\rho_x} coefficient.
 #' 
-copmd <- function(e0m, e0f, mxm0, mxf0, nx = 5, interp.rho = FALSE, keep.rho = FALSE, ...) {
+copmd <- function(e0m, e0f, mxm0, mxf0, nx = 5, interp.rho = FALSE, keep.rho = FALSE, 
+                  use.modpmd = FALSE, ...) {
     e0  <- list(female=e0f, male=e0m)
     mx0  <- list(female=mxf0, male=mxm0)
+    dotargs <- list(...)
+    m0args <- list()
+    if(use.modpmd)  # extract modpmd arguments
+        m0args <- dotargs[names(dotargs) %in% names(as.list(args(modpmd)))]
+
     for(sex in names(e0)) {
-        # convert to vectors if needed
+        # convert to vectors or matrix as needed
         if(length(dim(e0[[sex]])) > 0) 
             e0[[sex]] <- drop(as.matrix(e0[[sex]])) # if it's a data.frame, it would not drop dimension without as.matrix
-        if(length(dim(mx0[[sex]])) > 0) 
-            mx0[[sex]] <- drop(as.matrix(mx0[[sex]])) 
+        if(use.modpmd){
+            mx0[[sex]] <- .prepare.mx.for.modpmd(mx0[[sex]], nx = nx)
+            mx0[[sex]] <- do.call(".compute.mx0.for.modpmd", c(list(mx0[[sex]]), m0args))
+        } else {
+            if(length(dim(mx0[[sex]])) > 0) 
+                mx0[[sex]] <- drop(as.matrix(mx0[[sex]])) 
+        }
     }
     npred <- length(e0$male)
     if(length(e0$female) != npred)
         stop("Mismatch in length of the e0 vectors.")
     nage <- length(mx0$male)
     if(length(mx0$female) != nage)
-        stop("Mismatch in length of the mx0 vectors.")
+        stop("Mismatch in length of the mx0 objects.")
+
     # derive rho as an average over male and female
     if(nx == 5 && nage != nrow(MortCast::RhoMales)) {
         warning("Mismatch in length of mx0 and the coefficient dataset. mx truncated to ",
@@ -250,7 +334,8 @@ copmd <- function(e0m, e0f, mxm0, mxf0, nx = 5, interp.rho = FALSE, keep.rho = F
     rho.male <- .find.pmd.rho(MortCast::RhoMales, e0$male, nage, npred, nx = nx, interp.rho = interp.rho)
     rho.female <- .find.pmd.rho(MortCast::RhoFemales, e0$female, nage, npred, nx = nx, interp.rho = interp.rho)
     rho <- (rho.male + rho.female)/2
-    res <- .do.copmd(e0, mx0, rho = rho, npred = npred, nx = nx, ...)
+    res <- do.call(".do.copmd", c(list(e0, mx0, rho = rho, npred = npred, nx = nx), 
+                                  dotargs[!names(dotargs) %in% names(m0args)]))
 
     if(keep.rho) {
         res$male$rho.sex <- rho.male

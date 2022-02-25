@@ -2,6 +2,7 @@
 % Please edit documentation in R/other_methods.R
 \name{pmd}
 \alias{pmd}
+\alias{modpmd}
 \alias{copmd}
 \title{Pattern of Mortality Decline Prediction}
 \usage{
@@ -17,12 +18,39 @@ pmd(
   ...
 )
 
-copmd(e0m, e0f, mxm0, mxf0, nx = 5, interp.rho = FALSE, keep.rho = FALSE, ...)
+modpmd(
+  e0,
+  mx0,
+  sex = c("male", "female"),
+  nx = 5,
+  interp.rho = FALSE,
+  kranges = c(0, 25),
+  ax.index = NULL,
+  ax.smooth = FALSE,
+  ax.smooth.df = NULL,
+  keep.lt = FALSE,
+  keep.rho = FALSE,
+  ...
+)
+
+copmd(
+  e0m,
+  e0f,
+  mxm0,
+  mxf0,
+  nx = 5,
+  interp.rho = FALSE,
+  keep.rho = FALSE,
+  use.modpmd = FALSE,
+  ...
+)
 }
 \arguments{
 \item{e0}{A vector of target life expectancy, one element for each predicted time point.}
 
-\item{mx0}{A vector with starting age-specific mortality rates.}
+\item{mx0}{A vector with starting age-specific mortality rates. In case of \code{modpmd} it can be 
+a matrix where rows correspond to age groups
+and columns correspond to time periods. Rownames define the starting ages of the age groups.}
 
 \item{sex}{Either "male" or "female".}
 
@@ -40,7 +68,7 @@ resulting object.}
 
 \item{keep.rho}{Logical. If \code{TRUE} the \eqn{\rho} coefficients are included in the resulting object.}
 
-\item{\dots}{Additional arguments passed to the underlying function. For \code{copmd}, in addition to
+\item{\dots}{Additional arguments passed to the underlying functions. For \code{copmd}, in addition to
 \code{kranges} and \code{keep.lt}, it can be \code{sexratio.adjust} which is 
 a logical controlling if a sex-ratio adjustment should be applied to prevent crossovers 
 between male and female mx. In such a case it uses coefficients from the \code{\link{PMDadjcoef}} dataset. 
@@ -50,18 +78,31 @@ female mortality rates as the lower constraint for male mortality rates.
 If the argument \code{adjust.sr.if.needed} is set to \code{TRUE}, a sex-ratio adjustment
 is performed dynamically, using the sex ratio in the previous time point. 
 In such a case, an adjustment in time t is applied only if there was a drop of sex ratio 
-below one at time t-1.}
+below one at time t-1. Other arguments passed here in \code{copmd} can be \code{ax.index}, \code{ax.smooth} and
+\code{ax.smooth.df} which control the estimation of the initial mx if \code{use.modpmd} is \code{TRUE}.}
+
+\item{ax.index}{A vector of column indices of \code{mx} to be used to estimate the \eqn{a_x = E[log(mx(t_0))]} parameter.
+By default it is estimated as the average over all observed time periods, but this argument can restrict the time periods 
+to use.}
+
+\item{ax.smooth}{Logical allowing to smooth the \eqn{a_x} over ages.}
+
+\item{ax.smooth.df}{Degree of freedom for smoothing if \code{ax.smooth} is \code{TRUE}. 
+Default is half the length of \eqn{a_x}.}
 
 \item{e0m}{A time series of target male life expectancy.}
 
 \item{e0f}{A time series of target female life expectancy.}
 
-\item{mxm0}{A vector with starting age-specific male mortality rates.}
+\item{mxm0, mxf0}{A vector with starting age-specific male/female mortality rates. If \code{use.modpmd} is \code{TRUE},
+this can be a matrix of historical mx (age x time) from which the starting values are estimated.}
 
-\item{mxf0}{A vector with starting age-specific female mortality rates.}
+\item{use.modpmd}{Logical determining if the modified version of PMD (\code{modpmd}) should be used. 
+In such a case the starting values of mortality rates are estimated similarly to \eqn{a_x} in 
+\code{\link{leecarter.estimate}}, possibly from more than one time periods. In addition, a smooting can be applied.}
 }
 \value{
-Function \code{pmd} returns a list with the following elements: a matrix \code{mx}
+Function \code{pmd} and \code{modpmd} return a list with the following elements: a matrix \code{mx}
     with the predicted mortality rates. If \code{keep.lt} is \code{TRUE}, it also 
     contains matrices \code{sr} (survival rates), and life table quantities \code{Lx} and \code{lx}.
     If \code{keep.rho} is \code{TRUE}, it contains a matrix \code{rho} where columns correpond 
@@ -76,10 +117,10 @@ Function \code{copmd} returns a list with one element for each sex
 Predict age-specific mortality rates using the Pattern of mortality decline (PMD) method (Andreev et al. 2013).
 }
 \details{
-These functions implements the PMD method introduced in Andreev et al. (2013). 
+These functions implements the PMD method introduced in Andreev et al. (2013) and its modifications. 
     It assumes that the future decline in age-specific mortality will follow a certain pattern 
     with the increase in life expectancy at birth (e0): 
-    \deqn{\log mx(t) = \log mx(t-1) - k(t) \rho_x(t)}
+    \deqn{log[mx(t)] = log[mx(t-1)] - k(t) \rho_x(t)}
     
     Here, \eqn{\rho_x(t)} is the age-specific pattern of mortality decline between \eqn{t-1}
     and \eqn{t}. Such patterns for each sex and various levels of e0 
@@ -92,6 +133,11 @@ These functions implements the PMD method introduced in Andreev et al. (2013).
     coherently for both sexes. In the latter case, the same \eqn{\rho_x} 
     (namely the average over sex-specific \eqn{\rho_x}) is used 
     for both, male and female.
+
+Function \code{modpmd} implements a modified version of \code{pmd} where the initial \eqn{log[mx(t_0)]}
+is replaced by an \eqn{a_x} estimated as in \code{\link{leecarter.estimate}}, i.e. using possibly 
+multiple years of historical \code{mx} and optionally smoothed. Arguments \code{ax.index}, \code{ax.smooth} and 
+\code{ax.smooth.df} determine the estimation years and parameters of the smoothing.
 }
 \examples{
 data(mxF, e0Fproj, package = "wpp2017")
