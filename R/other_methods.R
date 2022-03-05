@@ -303,7 +303,7 @@ copmd <- function(e0m, e0f, mxm0, mxf0, nx = 5, interp.rho = FALSE, keep.rho = F
     dotargs <- list(...)
     m0args <- list()
     if(use.modpmd)  # extract modpmd arguments
-        m0args <- dotargs[names(dotargs) %in% names(as.list(args(modpmd)))]
+        m0args <- dotargs[names(dotargs) %in% names(as.list(args(.compute.mx0.for.modpmd)))]
 
     for(sex in names(e0)) {
         # convert to vectors or matrix as needed
@@ -580,9 +580,9 @@ logquadj <- function(e0m, e0f, ...) {
 
 .apply.kannisto.if.needed <- function(mx, min.age.groups, ...) {
     if(nrow(mx$female$mx) <  min.age.groups || nrow(mx$male$mx) <  min.age.groups) {
-    kan <- do.call("cokannisto", c(list(mx$male$mx, mx$female$mx), ...))
-    mx$male$mx <- kan$male
-    mx$female$mx <- kan$female
+        kan <- do.call("cokannisto", c(list(mx$male$mx, mx$female$mx), ...))
+        mx$male$mx <- kan$male
+        mx$female$mx <- kan$female
     }
     return(mx)
 }
