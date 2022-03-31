@@ -99,7 +99,7 @@ this can be a matrix of historical mx (age x time) from which the starting value
 
 \item{use.modpmd}{Logical determining if the modified version of PMD (\code{modpmd}) should be used. 
 In such a case the starting values of mortality rates are estimated similarly to \eqn{a_x} in 
-\code{\link{leecarter.estimate}}, possibly from more than one time periods. In addition, a smooting can be applied.}
+\code{\link{leecarter.estimate}}, possibly from more than one time periods. In addition, a smoothing can be applied.}
 }
 \value{
 Function \code{pmd} and \code{modpmd} return a list with the following elements: a matrix \code{mx}

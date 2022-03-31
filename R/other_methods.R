@@ -278,7 +278,7 @@ modpmd <- function(e0, mx0, sex = c("male", "female"), nx = 5, interp.rho = FALS
 #' @param nx Size of age groups. Should be either 5 or 1.
 #' @param use.modpmd Logical determining if the modified version of PMD (\code{modpmd}) should be used. 
 #'    In such a case the starting values of mortality rates are estimated similarly to \eqn{a_x} in 
-#'    \code{\link{leecarter.estimate}}, possibly from more than one time periods. In addition, a smooting can be applied.
+#'    \code{\link{leecarter.estimate}}, possibly from more than one time periods. In addition, a smoothing can be applied.
 #' @param \dots Additional arguments passed to the underlying functions. For \code{copmd}, in addition to
 #'      \code{kranges} and \code{keep.lt}, it can be \code{sexratio.adjust} which is 
 #'      a logical controlling if a sex-ratio adjustment should be applied to prevent crossovers 

@@ -1,4 +1,4 @@
-2.6-x (02/24/2022)
+2.7-0 (03/31/2022)
 -----
 Added function modpmd that allows to estimate the initial log(mx) in PMD as a_x in Lee-Carter,
 i.e. it allows to define indices of time periods to be used in the estimation, as well as it 
