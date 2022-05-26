@@ -219,8 +219,9 @@ ultimate.bx <- function(bx) {
     bx.lim <- rbind(apply(Bxt, 2, function(x) min(x[x>0])), 
                     apply(Bxt, 2, function(x) max(x[x>0])))
     for(sex in c("male", "female")) {
+        this.lmin <- floor(min(lmin, min(ax[[sex]])-0.1))
         kranges[[sex]]$kl <- pmin((lmax - apply(ax[[sex]], 2, max))/bx.lim[2,], machine.max)
-        kranges[[sex]]$ku <- pmax((lmin - apply(ax[[sex]], 2, min))/bx.lim[1,], machine.min)
+        kranges[[sex]]$ku <- pmax((this.lmin - apply(ax[[sex]], 2, min))/bx.lim[1,], machine.min)
     }
     return(kranges)
 }
