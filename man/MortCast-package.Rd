@@ -6,9 +6,7 @@
 \alias{MortCast-package}
 \title{MortCast: Estimation and Projection of Age-Specific Mortality Rates}
 \description{
-Age-specific mortality rates are estimated and projected using 
-    the Kannisto, Lee-Carter and related methods as described in 
-    Sevcikova et al. (2016) <doi:10.1007/978-3-319-26603-9_15>.
+Age-specific mortality rates are estimated and projected using the Kannisto, Lee-Carter and related methods as described in Sevcikova et al. (2016) <doi:10.1007/978-3-319-26603-9_15>.
 }
 \details{
 The package implements methodology described in Sevcikova et al. (2016) that is related to 

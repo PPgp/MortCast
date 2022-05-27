@@ -4,7 +4,7 @@
 \alias{kannisto.predict}
 \title{Kannisto Prediction}
 \usage{
-kannisto.predict(pars, ages)
+kannisto.predict(pars, ages, nx, method = "mx")
 }
 \arguments{
 \item{pars}{A named vector with Kanisto coefficients \eqn{c} and \eqn{d} 
@@ -45,6 +45,7 @@ cmxf.pred <- kannisto.predict(copars[["female"]]$coefficients, ages = ages[22:28
 plot(ages, c(mxm[1:21], cmxm.pred), type="l", log="y", 
     xlab="age", ylab="mx", col="blue")
 lines(ages, c(mxf[1:21], cmxf.pred), col="red")
+
 
 }
 \references{

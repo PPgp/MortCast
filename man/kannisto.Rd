@@ -4,7 +4,13 @@
 \alias{kannisto}
 \title{Kannisto Method}
 \usage{
-kannisto(mx, est.ages = seq(80, 95, by = 5), proj.ages = seq(100, 130, by = 5))
+kannisto(
+  mx,
+  est.ages = NULL,
+  proj.ages = NULL,
+  nx = 5,
+  method = c("mx", "qx", "modqx")
+)
 }
 \arguments{
 \item{mx}{A vector or matrix of mortality rates. If it is a matrix,
@@ -50,7 +56,7 @@ lines(ages, mxnew[,"2010-2015"])
 mx1y <- mlt(70, sex = "male", nx = 1)
 # Pretend we only observed mx for ages 0:100. 
 # Use 90-99 for estimation and extend mx from 100 to 140
-mx1ynew <- kannisto(mx1y[1:100, , drop = FALSE], est.ages = 90:99, proj.ages = 100:140)
+mx1ynew <- kannisto(mx1y[1:100, , drop = FALSE], proj.ages = 100:140, nx = 1)
 # Plot the new mx for old ages
 plot(80:140, mx1ynew[81:141], type = "l", xlab="age", ylab="mx", col="red")
 # Check how it compares to the original mx that was not used in the estimation

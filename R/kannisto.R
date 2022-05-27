@@ -47,7 +47,8 @@
 #' lines(100:130, mx1y[101:nrow(mx1y)])
 #' 
 
-kannisto <- function(mx, est.ages = NULL, proj.ages =NULL, nx = 5) {
+kannisto <- function(mx, est.ages = NULL, proj.ages = NULL, nx = 5, method = c("mx", "qx", "modqx")) {
+    method <- match.arg(method)
     ages <- if(length(dim(mx)) == 0) names(mx) else rownames(mx) 
     Mxe <- as.matrix(mx)
     if(is.null(est.ages)) est.ages <- if(nx == 1) 90:99 else seq(80, 95, by=5)
@@ -60,9 +61,9 @@ kannisto <- function(mx, est.ages = NULL, proj.ages =NULL, nx = 5) {
     if(any(!est.ages.char %in% rownames(Mxe)))
         stop("est.ages are not included in mx. Check the rownames of mx.")
     est.data <- Mxe[est.ages.char,, drop = FALSE]
-    kann.pars <- apply(est.data, 2, kannisto.estimate, ages = est.ages, nx = nx)
+    kann.pars <- apply(est.data, 2, kannisto.estimate, ages = est.ages, nx = nx, method = method)
     kanncoefs <- lapply(kann.pars, function(x) x$coefficients)
-    res <- lapply(kanncoefs, kannisto.predict, ages=proj.ages, nx = nx)
+    res <- lapply(kanncoefs, kannisto.predict, ages=proj.ages, nx = nx, method = method)
     mres <- sapply(res, cbind)
     
     all.ages <- as.character(sort(unique(c(as.integer(ages), proj.ages))))
@@ -204,16 +205,37 @@ cokannisto <- function(mxM, mxF,
 #' mx <- subset(mxM, name == "Canada")[,"2010-2015"]
 #' kannisto.estimate(mx[18:21], ages = 18:21)
 #' 
-kannisto.estimate <- function(mx, ages, nx = 5){
-    qx <- 1 - exp(-nx * mx)
-    y <- log(qx) - log(1-qx)
+kannisto.estimate <- function(mx, ages, nx = 5, method = "mx"){
+    ind <- if(method == "mx") mx else 1 - exp(-nx * mx) # translate to qx if needed 
+    if(method == "modqx")
+        return(kannisto.estimate.modqx(ind, ages, nx))
+    y <- log(ind) - log(1-ind)
     x <- ages
     coefs <- coefficients(lm(y ~ x))
     cf <- c(c=exp(coefs[[1]]), d=coefs[['x']])
-    fitted <- kannisto.predict(cf, ages, nx = nx)
+    fitted <- kannisto.predict(cf, ages, nx = nx, method = method)
     return(list(coefficients = cf,
                 fitted.values = fitted,
                 residuals = mx - fitted))
+}
+
+kannisto.estimate.modqx <- function(qx, ages, nx = 5){
+    oldC <- 0
+    newC <- 0.65
+    i <- 1
+    x <- ages - 110
+    while(i < 100 && (abs(oldC-newC) > 0.001)) {
+        q <- qx/newC
+        y <- log(q) - log(1-q)
+        B <- coefficients(lm(I(y - 2.2) ~ -1 + x))[["x"]]
+        expon <- 2.2 + B*x
+        oldC <- newC
+        newC <- mean(qx*(1+exp(expon))/exp(expon))
+        i <- i + 1
+    }
+    cf <- c(c = newC, d = B, a = 2.2, iter = i)
+    fitted <- kannisto.predict(cf, ages, nx = nx, method = "modqx")
+    return(list(coefficients = cf, fitted.values = fitted, residuals = -log(1-qx)/nx - fitted))
 }
 
 #' @title Coherent Kannisto Estimation
@@ -308,13 +330,20 @@ cokannisto.estimate <- function(mxM, mxF, ages, fitted = TRUE){
 #' lines(ages, c(mxf[1:21], cmxf.pred), col="red")
 #' 
 #' 
-kannisto.predict <- function(pars, ages, nx){
-    qx <- kannisto.predict.qx(pars, ages)
-    return(-log(1-qx)/nx)
+kannisto.predict <- function(pars, ages, nx, method = "mx"){
+    if(method == "modqx") mx <- do.kannisto.predict.modqx(pars, ages)
+    else mx <- do.kannisto.predict(pars, ages)
+    if(method != "mx") mx <- -log(1-mx)/nx # in this case the above gives qx, so needs to be converted to mx
+    return(mx)
 }
 
-kannisto.predict.qx <- function(pars, ages){
+do.kannisto.predict <- function(pars, ages){
     numer <- pars["c"] * exp(pars["d"] * ages)
     return(numer/(1 + numer))
+}
+
+do.kannisto.predict.modqx <- function(pars, ages){
+    numer <- exp(pars["a"] + pars["d"] * (ages - 110))
+    return(pars["c"] * numer/(1 + numer))
 }
 

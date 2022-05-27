@@ -4,7 +4,7 @@
 \alias{kannisto.estimate}
 \title{Kannisto Estimation}
 \usage{
-kannisto.estimate(mx, ages)
+kannisto.estimate(mx, ages, nx = 5, method = "mx")
 }
 \arguments{
 \item{mx}{A vector of mortality rates.}
