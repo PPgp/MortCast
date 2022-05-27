@@ -40,28 +40,29 @@
 #' mx1y <- mlt(70, sex = "male", nx = 1)
 #' # Pretend we only observed mx for ages 0:100. 
 #' # Use 90-99 for estimation and extend mx from 100 to 140
-#' mx1ynew <- kannisto(mx1y[1:100, , drop = FALSE], est.ages = 90:99, proj.ages = 100:140)
+#' mx1ynew <- kannisto(mx1y[1:100, , drop = FALSE], proj.ages = 100:140, nx = 1)
 #' # Plot the new mx for old ages
 #' plot(80:140, mx1ynew[81:141], type = "l", xlab="age", ylab="mx", col="red")
 #' # Check how it compares to the original mx that was not used in the estimation
 #' lines(100:130, mx1y[101:nrow(mx1y)])
 #' 
 
-kannisto <- function(mx, est.ages = seq(80, 95, by=5), 
-                     proj.ages = seq(100, 130, by=5)) {
+kannisto <- function(mx, est.ages = NULL, proj.ages =NULL, nx = 5) {
     ages <- if(length(dim(mx)) == 0) names(mx) else rownames(mx) 
     Mxe <- as.matrix(mx)
+    if(is.null(est.ages)) est.ages <- if(nx == 1) 90:99 else seq(80, 95, by=5)
+    if(is.null(proj.ages)) proj.ages <- if(nx == 1) 100:130 else seq(100, 130, by=5)
     if(is.null(ages)) # default ages
-        ages <- as.character(c(0,1, seq(5, by=5, length=nrow(Mxe)-2)))
+        ages <- as.character(if(nx == 1) 1:nrow(Mxe) else c(0,1, seq(5, by=5, length=nrow(Mxe)-2)))
     ages.num <- as.integer(ages)
     rownames(Mxe) <- ages
     est.ages.char <- as.character(est.ages)
     if(any(!est.ages.char %in% rownames(Mxe)))
         stop("est.ages are not included in mx. Check the rownames of mx.")
     est.data <- Mxe[est.ages.char,, drop = FALSE]
-    kann.pars <- apply(est.data, 2, kannisto.estimate, ages = est.ages)
+    kann.pars <- apply(est.data, 2, kannisto.estimate, ages = est.ages, nx = nx)
     kanncoefs <- lapply(kann.pars, function(x) x$coefficients)
-    res <- lapply(kanncoefs, kannisto.predict, ages=proj.ages)
+    res <- lapply(kanncoefs, kannisto.predict, ages=proj.ages, nx = nx)
     mres <- sapply(res, cbind)
     
     all.ages <- as.character(sort(unique(c(as.integer(ages), proj.ages))))
@@ -203,12 +204,13 @@ cokannisto <- function(mxM, mxF,
 #' mx <- subset(mxM, name == "Canada")[,"2010-2015"]
 #' kannisto.estimate(mx[18:21], ages = 18:21)
 #' 
-kannisto.estimate <- function(mx, ages){
-    y <- log(mx) - log(1-mx)
+kannisto.estimate <- function(mx, ages, nx = 5){
+    qx <- 1 - exp(-nx * mx)
+    y <- log(qx) - log(1-qx)
     x <- ages
     coefs <- coefficients(lm(y ~ x))
     cf <- c(c=exp(coefs[[1]]), d=coefs[['x']])
-    fitted <- kannisto.predict(cf, ages)
+    fitted <- kannisto.predict(cf, ages, nx = nx)
     return(list(coefficients = cf,
                 fitted.values = fitted,
                 residuals = mx - fitted))
@@ -305,7 +307,13 @@ cokannisto.estimate <- function(mxM, mxF, ages, fitted = TRUE){
 #'     xlab="age", ylab="mx", col="blue")
 #' lines(ages, c(mxf[1:21], cmxf.pred), col="red")
 #' 
-kannisto.predict <- function(pars, ages){
+#' 
+kannisto.predict <- function(pars, ages, nx){
+    qx <- kannisto.predict.qx(pars, ages)
+    return(-log(1-qx)/nx)
+}
+
+kannisto.predict.qx <- function(pars, ages){
     numer <- pars["c"] * exp(pars["d"] * ages)
     return(numer/(1 + numer))
 }
