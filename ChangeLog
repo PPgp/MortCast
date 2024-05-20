@@ -1,3 +1,7 @@
+2.7-* (05/19/2024)
+-----
+When searching for k to match mx to given e0, the ranges are modified if the initial ranges are not wide enough.
+
 2.7-0 (03/31/2022)
 -----
 Added function modpmd that allows to estimate the initial log(mx) in PMD as a_x in Lee-Carter,

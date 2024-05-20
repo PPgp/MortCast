@@ -355,13 +355,15 @@ void LTforLC(int sex, int nage, int nx, double *mx, int a0rule,
 
 void LCEoKtC(int sex, int nage, int nx, double *ax, double *bx, 
 			 double eop, double kl, double ku, double *constraints, int a0rule,
-			 double *LLm, double *lm, double *Mx) {
+			 double *LLm, double *lm, double *Mx, int *code) {
 	double mxm[nage], LTeo, k2;
 	int i, dim;
 	if(nx == 1) dim = nage;
 	else dim = nage-1;
 	double LTl[dim], LTu[dim];
 
+	*code = 0;
+	
 	/* check if the eop lies outside of the bounds */
 	for (i=0; i < nage; ++i) {
 		mxm[i] = get_constrained_mortality(ax[i], bx[i], kl, constraints[i]);
@@ -372,6 +374,8 @@ void LCEoKtC(int sex, int nage, int nx, double *ax, double *bx,
 	if(eop < sum(LTl, dim)) {
 		for (i=0; i < dim; ++i) LLm[i]=LTl[i];
 		for (i=0; i < nage; ++i) Mx[i] = mxm[i];
+		*code = -1;
+		/*Rprintf("\ncode = -1; kl = %f", kl);*/
 		return;
 	}
 
@@ -384,6 +388,8 @@ void LCEoKtC(int sex, int nage, int nx, double *ax, double *bx,
 	if(eop > sum(LTu, dim)) {
 		for (i=0; i < dim; ++i) LLm[i]=LTu[i]; 
 		for (i=0; i < nage; ++i) Mx[i] = mxm[i];
+		*code = 1;
+		/*Rprintf("\ncode = 1; ku = %f", ku);*/
 		return;
 	}
 	/* Bi-section method */
@@ -404,6 +410,7 @@ void LCEoKtC(int sex, int nage, int nx, double *ax, double *bx,
 		LTeo = sum(LLm, dim);
 	}
 	for (i=0; i < nage; ++i) Mx[i] = mxm[i];
+	/*Rprintf("\ncode = 0; k2 = %f, LTe0 = %f", k2, LTeo);*/
 }
 
 void get_sx(double *LLm, double *sx, int n, int Ldim, int nx) {
@@ -439,13 +446,14 @@ void LC(int *Npred, int *Sex, int *Nage, int *Nx, double *ax, double *bx,
 		double *Eop, double *Kl, double *Ku, int *constrain, double *FMx, double *FEop, int *a0rule,
 		double *LLm, double *Sr, double *lx, double *Mx) {
 	double eop, mxm[*Nage], fmx[*Nage], locbx[*Nage], locax[*Nage];
-	int i, sex, npred, pred, nage, nagem1, cage, nx;
+	int i, sex, npred, pred, nage, nagem1, cage, nx, mxcode;
 	
 	npred = *Npred;
 	sex=*Sex;
 	nage=*Nage;
 	cage = -1;
 	nx = *Nx;
+	/*mxcode = 0;*/
 	
 	if(nx == 1) nagem1 = nage;
 	else nagem1 = nage-1;
@@ -472,7 +480,17 @@ void LC(int *Npred, int *Sex, int *Nage, int *Nx, double *ax, double *bx,
 			locax[i] = ax[i + pred*nage];
 		}
 
-		LCEoKtC(sex, nage, nx, locax, locbx, eop, Kl[pred], Ku[pred], fmx, *a0rule, Lm, lm, mxm);		
+		LCEoKtC(sex, nage, nx, locax, locbx, eop, Kl[pred], Ku[pred], fmx, *a0rule, Lm, lm, mxm, &mxcode);
+		if(mxcode == -1){ /* move Kl if not sufficient */ 
+		    LCEoKtC(sex, nage, nx, locax, locbx, eop, fmin(Kl[pred] + Kl[pred] - Ku[pred], log(DBL_MAX)), 
+              Kl[pred], fmx, *a0rule, Lm, lm, mxm, &mxcode);
+		} else {
+		    if(mxcode == 1){ /* move Ku if not sufficient */ 
+		        LCEoKtC(sex, nage, nx, locax, locbx, eop, Ku[pred], 
+                  fmax(Ku[pred] - (Kl[pred] - Ku[pred]), log(DBL_MIN)), fmx, *a0rule, Lm, lm, mxm, &mxcode);
+		    }
+		}
+		
 		get_sx(Lm, sx, nagem1, nagem1, nx);
 		
 		for (i=0; i < nagem1; ++i) {
@@ -495,7 +513,7 @@ void PMD(int *Npred, int *Sex, int *Nage, int *Nx, double *mx0, double *rho,
         int *ConstrIfNeeded, double *FMx, double *SRini, int *a0rule,
         double *LLm, double *Sr, double *lx, double *Mx) {
     double eop, mxm[*Nage], fmx[*Nage], locrho[*Nage], locmx[*Nage], constr[*Nage], sr0[*Nage], sr1[*Nage];
-    int i, sex, npred, pred, nage, nagem1, nconstr, nx;
+    int i, sex, npred, pred, nage, nagem1, nconstr, nx, mxcode;
     
     npred = *Npred;
     sex=*Sex;
@@ -541,7 +559,16 @@ void PMD(int *Npred, int *Sex, int *Nage, int *Nx, double *mx0, double *rho,
         }
 
         /*Rprintf("\n%i: eop=%lf", pred, eop);*/
-        LCEoKtC(sex, nage, nx, locmx, locrho, eop, Kl[0], Ku[0], constr, *a0rule, Lm, lm, mxm);		
+        LCEoKtC(sex, nage, nx, locmx, locrho, eop, Kl[0], Ku[0], constr, *a0rule, Lm, lm, mxm, &mxcode);
+        if(mxcode == -1){ /* move Kl if not sufficient */ 
+            LCEoKtC(sex, nage, nx, locmx, locrho, eop, fmin(Kl[0] + Kl[0] - Ku[0], log(DBL_MAX)), 
+                Kl[0], constr, *a0rule, Lm, lm, mxm, &mxcode);
+        } else {
+            if(mxcode == 1){ /* move Ku if not sufficient */ 
+                LCEoKtC(sex, nage, nx, locmx, locrho, eop, Ku[0], 
+                    fmax(Ku[0] - (Kl[0] - Ku[0]), log(DBL_MIN)), constr, *a0rule, Lm, lm, mxm, &mxcode);
+            }
+        }
         get_sx(Lm, sx, nagem1, nagem1, nx);
         
         for (i=0; i < nagem1; ++i) {
