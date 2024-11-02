@@ -1,15 +1,27 @@
 Package: MortCast
 Type: Package
 Title: Estimation and Projection of Age-Specific Mortality Rates
-Version: 2.7-0.9002
-Date: 2024-05-19
-Author: Hana Sevcikova, Nan Li and Patrick Gerland
-Maintainer: Hana Sevcikova <hanas@uw.edu>
+Version: 2.7-1
+Date: 2024-11-01
+Authors@R: c(person(given = "Hana",
+                    family = "Sevcikova",
+                    role = c("cre", "aut"),
+                    email = "hanas@uw.edu"),
+            person(given = "Nan",
+                      family = "Li",
+                      role = "aut"
+                      ),
+            person(given = "Patrick",
+                      family = "Gerland",
+                      role = "aut",
+                      email = "gerland@un.org"
+                      )
+          )
 Description: Age-specific mortality rates are estimated and projected using 
     the Kannisto, Lee-Carter and related methods as described in 
     Sevcikova et al. (2016) <doi:10.1007/978-3-319-26603-9_15>.
 License: GPL (>= 2)
 Depends: R (>= 3.5.0), wpp2017
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.3
 LazyLoad: True
 LazyData: True

@@ -12,7 +12,7 @@ mortcast.blend(
   weights = c(1, 0.5),
   nx = 5,
   apply.kannisto = TRUE,
-  min.age.groups = 28,
+  min.age.groups = if (nx == 5) 28 else 131,
   match.e0 = TRUE,
   keep.lt = FALSE,
   meth1.args = NULL,
@@ -48,7 +48,7 @@ by \code{1 - weights}.}
 is applied to extend the age groups into old ages.}
 
 \item{min.age.groups}{Minimum number of age groups. Triggers the application of Kannisto, see above. 
-Change the default value if 1-year age groups are used (see Example).}
+For a 5-year age groups, the default is 28; for 1-year ages it is 131.}
 
 \item{match.e0}{Logical. If \code{TRUE} the blended mx is scaled so that it matches the input e0.}
 

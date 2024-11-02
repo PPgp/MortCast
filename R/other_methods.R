@@ -614,7 +614,7 @@ logquadj <- function(e0m, e0f, ...) {
 #'     \code{min.age.groups} age categories, the coherent Kannisto method (\code{\link{cokannisto}}) 
 #'     is applied to extend the age groups into old ages.
 #' @param min.age.groups Minimum number of age groups. Triggers the application of Kannisto, see above. 
-#'     Change the default value if 1-year age groups are used (see Example).
+#'     For a 5-year age groups, the default is 28; for 1-year ages it is 131.
 #' @param match.e0 Logical. If \code{TRUE} the blended mx is scaled so that it matches the input e0.
 #' @param keep.lt Logical. If \code{TRUE} additional life table columns are kept in the 
 #'     resulting object. Only used if \code{match.e0} is \code{TRUE}.
@@ -701,7 +701,7 @@ logquadj <- function(e0m, e0f, ...) {
 #' @name mortcast.blend
 mortcast.blend <- function(e0m, e0f, 
                           meth1 = "lc", meth2 = "mlt", weights = c(1, 0.5), nx = 5, 
-                          apply.kannisto = TRUE, min.age.groups = 28, 
+                          apply.kannisto = TRUE, min.age.groups = if(nx == 5) 28 else 131, 
                           match.e0 = TRUE, keep.lt = FALSE, 
                           meth1.args = NULL, meth2.args = NULL, kannisto.args = NULL, ...) {
     get.a0rule <- function(a0rule = c("ak", "cd"), ...)
@@ -733,6 +733,9 @@ mortcast.blend <- function(e0m, e0f,
     mx2 <- do.call(methods.allowed[[meth2]], c(list(e0m, e0f), meth2.args))
     
     if(apply.kannisto) {
+        if(is.null(kannisto.args) && nx == 1){
+            kannisto.args <- list(est.ages = 90:99, proj.ages = 100:130)
+        }
         mx1 <- .apply.kannisto.if.needed(mx1, min.age.groups, kannisto.args)
         mx2 <- .apply.kannisto.if.needed(mx2, min.age.groups, kannisto.args)
     }
@@ -744,6 +747,12 @@ mortcast.blend <- function(e0m, e0f,
     res <- list()
     for(sex in names(mx1)) {
         if(! sex %in% names(mx2)) next
+        if(nrow(mx1[[sex]]$mx) != nrow(mx2[[sex]]$mx)){ # truncate to match the mx datasets
+            warning("Mismatch in number of age groups of the two mx datasets. mx truncated to ", 
+                    min(nrow(mx1[[sex]]$mx), nrow(mx2[[sex]]$mx)))
+            if(nrow(mx1[[sex]]$mx) < nrow(mx2[[sex]]$mx)) mx2[[sex]]$mx <- mx2[[sex]]$mx[1:nrow(mx1[[sex]]$mx),]
+            else mx1[[sex]]$mx[1:nrow(mx2[[sex]]$mx),]
+        }
         if(is.null(wmat))
            wmat <- matrix(w, ncol = npred, nrow = nrow(mx1[[sex]]$mx), byrow = TRUE)
         res[[sex]] <- list(mx = wmat * mx1[[sex]]$mx + (1-wmat) * mx2[[sex]]$mx)
