@@ -19,7 +19,9 @@
 #' @param e0 A vector of target life expectancy, one element for each predicted time point. 
 #' @param mx0 A vector with starting age-specific mortality rates. In case of \code{modpmd} it can be 
 #'     a matrix where rows correspond to age groups
-#'     and columns correspond to time periods. Rownames define the starting ages of the age groups.
+#'     and columns correspond to time periods. Row names define the starting ages of the age groups. 
+#'     As the \eqn{\rho_x} coefficients are only available up to age 100, the \code{mx0} gets truncated 
+#'     if it contains values beyond 100. In such a case, a warning is issued.
 #' @param sex Either "male" or "female".
 #' @param nx Size of age groups. Should be either 5 or 1.
 #' @param interp.rho Logical controlling if the \eqn{\rho} coefficients should be interpolated 
@@ -33,7 +35,7 @@
 #' @return Function \code{pmd} and \code{modpmd} return a list with the following elements: a matrix \code{mx}
 #'     with the predicted mortality rates. If \code{keep.lt} is \code{TRUE}, it also 
 #'     contains matrices \code{sr} (survival rates), and life table quantities \code{Lx} and \code{lx}.
-#'     If \code{keep.rho} is \code{TRUE}, it contains a matrix \code{rho} where columns correpond 
+#'     If \code{keep.rho} is \code{TRUE}, it contains a matrix \code{rho} where columns correspond 
 #'     to the values in the \code{e0} vector and rows correspond to age groups.
 #' @export
 #' 
@@ -195,6 +197,14 @@ modpmd <- function(e0, mx0, sex = c("male", "female"), nx = 5, interp.rho = FALS
     if(!nx %in% c(1, 5))
         stop("The nx argument must be either 5 or 1.")
     nage <- length(mx0l[[1]])
+    nage.rho <- sum(!is.na(rho[,1]))
+    if(nage.rho < nage){
+        for(i in 1:length(mx0l))
+            mx0l[[i]] <- mx0l[[i]][1:nage.rho]
+        rho <- rho[1:nage.rho,]
+        warning("The rho coefficients not available for all mx ages. mx will be truncated.")
+        nage <- nage.rho
+    }
     if(nx == 5) {
         default.ages <- c(0, 1, seq(5, length = nage - 2, by = 5))
         resnage <-  nage-1 # number of age groups of the resulting matrices 

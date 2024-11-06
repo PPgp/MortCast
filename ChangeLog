@@ -1,8 +1,10 @@
-2.7-1 (11/01/2024)
+2.7-1 (11/06/2024)
 -----
 When searching for k to match mx to given e0, the ranges are modified if the initial ranges are not wide enough.
 
 Default arguments of mortcast.blend change depending if nx = 1 or 5. 
+
+The pmd functions automatically truncate mx if the age goes beyond ages for which coefficients are available, i.e. older than 100. 
 
 2.7-0 (03/31/2022)
 -----

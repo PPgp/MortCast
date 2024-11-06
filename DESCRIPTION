@@ -1,7 +1,7 @@
 Package: MortCast
 Type: Package
 Title: Estimation and Projection of Age-Specific Mortality Rates
-Version: 2.7-1
+Version: 2.7-1.9001
 Date: 2024-11-01
 Authors@R: c(person(given = "Hana",
                     family = "Sevcikova",

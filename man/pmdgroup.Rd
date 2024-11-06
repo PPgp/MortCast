@@ -50,7 +50,9 @@ copmd(
 
 \item{mx0}{A vector with starting age-specific mortality rates. In case of \code{modpmd} it can be 
 a matrix where rows correspond to age groups
-and columns correspond to time periods. Rownames define the starting ages of the age groups.}
+and columns correspond to time periods. Row names define the starting ages of the age groups. 
+As the \eqn{\rho_x} coefficients are only available up to age 100, the \code{mx0} gets truncated 
+if it contains values beyond 100. In such a case, a warning is issued.}
 
 \item{sex}{Either "male" or "female".}
 
@@ -105,7 +107,7 @@ In such a case the starting values of mortality rates are estimated similarly to
 Function \code{pmd} and \code{modpmd} return a list with the following elements: a matrix \code{mx}
     with the predicted mortality rates. If \code{keep.lt} is \code{TRUE}, it also 
     contains matrices \code{sr} (survival rates), and life table quantities \code{Lx} and \code{lx}.
-    If \code{keep.rho} is \code{TRUE}, it contains a matrix \code{rho} where columns correpond 
+    If \code{keep.rho} is \code{TRUE}, it contains a matrix \code{rho} where columns correspond 
     to the values in the \code{e0} vector and rows correspond to age groups.
 
 Function \code{copmd} returns a list with one element for each sex 
