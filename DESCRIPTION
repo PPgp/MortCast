@@ -1,8 +1,8 @@
 Package: MortCast
 Type: Package
 Title: Estimation and Projection of Age-Specific Mortality Rates
-Version: 2.7-1.9001
-Date: 2024-11-01
+Version: 2.8-0
+Date: 2024-11-15
 Authors@R: c(person(given = "Hana",
                     family = "Sevcikova",
                     role = c("cre", "aut"),
@@ -22,6 +22,6 @@ Description: Age-specific mortality rates are estimated and projected using
     Sevcikova et al. (2016) <doi:10.1007/978-3-319-26603-9_15>.
 License: GPL (>= 2)
 Depends: R (>= 3.5.0), wpp2017
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 LazyLoad: True
 LazyData: True
